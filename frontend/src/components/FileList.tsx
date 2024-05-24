@@ -1,25 +1,27 @@
-// src/components/FileList.tsx
 import React, { useEffect, useContext } from 'react';
 import { FileContext } from '../context/FileContext';
 import axios from 'axios';
 
 const FileList = () => {
-  const { state, dispatch } = useContext(FileContext);
+  const context = useContext(FileContext);
+
+  if (!context) {
+    throw new Error('FileList must be used within a FileProvider');
+  }
+
+  const { state, dispatch } = context;
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      try {
-        const response = await axios.get('http://localhost:8000/files');
+    dispatch({ type: 'SET_LOADING', payload: true });
+    axios.get('http://localhost:8000/files')
+      .then(response => {
         dispatch({ type: 'SET_FILES', payload: response.data });
         dispatch({ type: 'SET_LOADING', payload: false });
-      } catch (error) {
+      })
+      .catch(error => {
         dispatch({ type: 'SET_ERROR', payload: error.message });
         dispatch({ type: 'SET_LOADING', payload: false });
-      }
-    };
-
-    fetchFiles();
+      });
   }, [dispatch]);
 
   return (

@@ -1,52 +1,39 @@
-// src/context/FileContext.tsx
-import React, { createContext, useReducer, useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { FileContext } from '../context/FileContext';
+import axios from 'axios';
 
-// Tipos de ações para gerenciar o estado
-const ActionTypes = {
-  SET_FILES: 'SET_FILES',
-  ADD_FILE: 'ADD_FILE',
-  SET_LOADING: 'SET_LOADING',
-  SET_ERROR: 'SET_ERROR'
-};
+const FileList = () => {
+  const context = useContext(FileContext);
 
-// Estado inicial
-const initialState = {
-  files: [],
-  loading: false,
-  error: ''
-};
-
-// Criando o contexto
-const FileContext = createContext({});
-
-// Reducer para atualizar o estado
-function fileReducer(state, action) {
-  switch (action.type) {
-    case ActionTypes.SET_FILES:
-      return { ...state, files: action.payload, loading: false };
-    case ActionTypes.ADD_FILE:
-      return { ...state, files: [...state.files, action.payload], loading: false };
-    case ActionTypes.SET_LOADING:
-      return { ...state, loading: action.payload };
-    case ActionTypes.SET_ERROR:
-      return { ...state, error: action.payload, loading: false };
-    default:
-      return state;
+  if (!context) {
+    throw new Error('FileList must be used within a FileProvider');
   }
-}
 
-// Provider que envolve seus componentes
-export const FileProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(fileReducer, initialState);
+  const { state, dispatch } = context;
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const response = await axios.get('http://localhost:8000/files');
+        dispatch({ type: 'SET_FILES', payload: response.data });
+        dispatch({ type: 'SET_LOADING', payload: false });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: error.message });
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+
+    fetchFiles();
+  }, [dispatch]);
 
   return (
-    <FileContext.Provider value={{ state, dispatch }}>
-      {children}
-    </FileContext.Provider>
+    <ul>
+      {state.files.map((file, index) => (
+        <li key={index}>{file.name}</li>
+      ))}
+    </ul>
   );
 };
 
-// Hook personalizado para usar o contexto
-export const useFile = () => useContext(FileContext);
-
-export default FileContext;
+export default FileList;

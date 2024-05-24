@@ -1,11 +1,10 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
 import { FileProvider } from './context/FileContext';
 import FileUploader from './components/FileUploader';
 import FileList from './components/FileList';
-import NoMatch from './components/ui/no-match';
+import { NoMatch } from './components/ui/no-match';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -18,5 +17,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </Routes>
       </FileProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

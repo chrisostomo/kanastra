@@ -1,14 +1,21 @@
-// src/components/FileUploader.tsx
 import React, { useState, useContext } from 'react';
 import { FileContext } from '../context/FileContext';
-import {axios} from 'axios';
+import axios from 'axios';
 
 const FileUploader = () => {
-  const [file, setFile] = useState(null);
-  const { dispatch } = useContext(FileContext);
+  const [file, setFile] = useState<File | null>(null);
+  const context = useContext(FileContext);
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+  if (!context) {
+    throw new Error('FileUploader must be used within a FileProvider');
+  }
+
+  const { dispatch } = context;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
   };
 
   const handleUpload = async () => {
