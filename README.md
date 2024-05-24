@@ -112,18 +112,3 @@ kanasta/
   pytest tests/integration
   ```
 
-## Contribuindo
-
-Contribuições são bem-vindas! Por favor, faça um fork do repositório e crie um pull request com suas alterações.
-
-## Licença
-
-Este projeto é licenciado sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## Agradecimentos
-
-Agradecemos aos colaboradores e à comunidade de código aberto pelos valiosos recursos e ferramentas.
-
----
-
-Com essa configuração, você pode gerenciar uploads de arquivos de forma eficiente, processá-los de forma assíncrona e manter um registro histórico, garantindo um sistema robusto e escalável. Bom desenvolvimento!
