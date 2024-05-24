@@ -1,0 +1,73 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2023-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.1.0",
+  "resources": [
+    {
+      "_id": "req_upload_csv",
+      "parentId": "wrk_1",
+      "modified": 0,
+      "created": 0,
+      "url": "http://localhost:8080/upload",
+      "name": "Upload CSV",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "file",
+            "fileName": "test.csv",
+            "type": "file"
+          },
+          {
+            "name": "email",
+            "value": "user@example.com",
+            "type": "text"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "_type": "request"
+    },
+    {
+      "_id": "req_list_files",
+      "parentId": "wrk_1",
+      "modified": 0,
+      "created": 0,
+      "url": "http://localhost:8080/files",
+      "name": "List Files",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "_type": "request"
+    },
+    {
+      "_id": "wrk_1",
+      "parentId": null,
+      "modified": 0,
+      "created": 0,
+      "name": "Kanastra API",
+      "description": "",
+      "_type": "workspace"
+    }
+  ]
+}
