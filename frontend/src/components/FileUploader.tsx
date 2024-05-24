@@ -1,7 +1,7 @@
 // src/components/FileUploader.tsx
 import React, { useState, useContext } from 'react';
 import { FileContext } from '../context/FileContext';
-import axios from 'axios';
+import {axios} from 'axios';
 
 const FileUploader = () => {
   const [file, setFile] = useState(null);
