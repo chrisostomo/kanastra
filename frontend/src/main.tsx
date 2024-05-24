@@ -1,21 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import * as Components from './components/ui';
-import { FileProvider } from './context/FileContext';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+import { FileProvider } from './context/FileContext';
+import FileUploader from './components/FileUploader';
+import FileList from './components/FileList';
+import NoMatch from './components/NoMatch';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <FileProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <FileProvider>
         <Routes>
-          <Route path="/" element={<Components.Layout />}>
-            <Route index element={<Components.FileUploader />} />
-            <Route path="table" element={<Components.FileTable />} />
-            <Route path="*" element={<Components.NoMatch />} />
-          </Route>
+          <Route path="/" element={<FileUploader />} />
+          <Route path="/list" element={<FileList />} />
+          <Route path="*" element={<NoMatch />} />
         </Routes>
-      </BrowserRouter>
-    </FileProvider>
+      </FileProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 );
