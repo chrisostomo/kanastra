@@ -1,7 +1,7 @@
 // src/api/api.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000'; // Modifique conforme a URL da sua API
+const API_URL = 'http://localhost:8000';
 
 // Função para enviar arquivos
 export const uploadFile = async (file) => {
