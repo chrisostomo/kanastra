@@ -1,20 +1,23 @@
-from app.tasks import process_csv, send_email
-from unittest.mock import patch
-import unittest
+import os
+import pytest
+from tasks import process_file_task, save_file
 
-class TestTasks(unittest.TestCase):
+@pytest.fixture
+def sample_file(tmpdir):
+    content = b"name,governmentId,email,debtAmount,debtDueDate,debtId\nJohn Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-10,1"
+    file_path = os.path.join(tmpdir, "test.csv")
+    with open(file_path, 'wb') as f:
+        f.write(content)
+    return file_path
 
-    @patch('app.tasks.SessionLocal')
-    def test_process_csv(self, mock_session):
-        csv_content = "name,governmentId,email,debtAmount,debtDueDate,debtID\nJohn Doe,11111111111,johndoe@example.com,1000.00,2022-10-01,123e4567-e89b-12d3-a456-426614174000"
-        process_csv(csv_content, "user@example.com")
-        self.assertTrue(mock_session().add.called)
-        self.assertTrue(mock_session().commit.called)
+def test_save_file(sample_file):
+    content = b"sample content"
+    file_path = save_file(content, "sample.txt", directory=os.path.dirname(sample_file))
+    assert os.path.exists(file_path)
+    with open(file_path, 'rb') as f:
+        assert f.read() == content
 
-    @patch('smtplib.SMTP')
-    def test_send_email(self, mock_smtp):
-        send_email("user@example.com")
-        self.assertTrue(mock_smtp.return_value.send_message.called)
-
-if __name__ == "__main__":
-    unittest.main()
+def test_process_file_task(sample_file):
+    result = process_file_task(sample_file)
+    assert result["status"] == "success"
+    assert "File processed successfully" in result["message"]
