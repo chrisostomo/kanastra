@@ -3,8 +3,6 @@ import uuid
 import os
 from dotenv import load_dotenv
 
-
-# Carrega variáveis do .env
 load_dotenv()
 
 class RedisClient:
@@ -35,6 +33,7 @@ class RedisClient:
             task_id = str(uuid.uuid4())
             self.client.set(task_id, 'processing')
             self.client.rpush('tasks', task_id)
+            self.client.set(f'{task_id}_message', '')
             return task_id
         except Exception as e:
             print(f"Erro ao criar a tarefa: {e}")
@@ -58,11 +57,15 @@ class RedisClient:
         Recupera todas as tarefas armazenadas no Redis.
 
         Returns:
-            list: Uma lista de dicionários contendo o ID e o status de cada tarefa.
+            list: Uma lista de dicionários contendo o ID, o status e a mensagem de cada tarefa.
         """
         try:
             task_ids = self.client.lrange('tasks', 0, -1)
-            tasks = [{"id": task_id, "status": self.client.get(task_id)} for task_id in task_ids]
+            tasks = []
+            for task_id in task_ids:
+                task_status = self.client.get(task_id)
+                task_message = self.client.get(f'{task_id}_message') or 'No message available'
+                tasks.append({"id": task_id, "status": task_status, "message": task_message})
             return tasks
         except Exception as e:
             print(f"Erro ao recuperar as tarefas: {e}")
