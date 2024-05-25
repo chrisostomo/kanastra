@@ -50,7 +50,7 @@ class AppService:
 redis_client = RedisClient()
 app_service = AppService(redis_client=redis_client)
 
-@app.post("/process_file/")
+@app.post("/upload_csv/")
 async def upload_csv(background_tasks: BackgroundTasks, email: str = Form(...), file: UploadFile = File(...)):
     return await app_service.upload_csv(background_tasks, email, file)
 
