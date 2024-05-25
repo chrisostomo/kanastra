@@ -23,3 +23,7 @@ def init_db():
 
 # Inicialização do banco de dados
 init_db()
+
+# Configuração do Redis
+from .redis_client import RedisClient
+redis_client = RedisClient()

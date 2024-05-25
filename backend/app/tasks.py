@@ -1,18 +1,13 @@
-from celery import Celery
+from . import celery, redis_client, SessionLocal
 import os
 import csv
 from sqlalchemy.orm import sessionmaker
-from .models import Debt, engine
+from .models import Debt
 import smtplib
 from email.mime.text import MIMEText
-from .redis_client import RedisClient
-
-app = Celery('app.tasks', broker='redis://redis:6379/0', backend='redis://redis:6379/0')
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class TaskProcessor:
-    def __init__(self, redis_client: RedisClient, session_factory):
+    def __init__(self, redis_client, session_factory):
         self.redis_client = redis_client
         self.session_factory = session_factory
 
@@ -73,8 +68,8 @@ def save_file(file_content, file_name, directory='uploads'):
     except Exception as e:
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
-task_processor = TaskProcessor(redis_client=RedisClient(), session_factory=SessionLocal)
+task_processor = TaskProcessor(redis_client=redis_client, session_factory=SessionLocal)
 
-@app.task
+@celery.task
 def process_csv_task(file_path, email):
     return task_processor.process_csv_task(file_path, email)

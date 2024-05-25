@@ -15,6 +15,3 @@ docker network prune -f
 
 # Remover todos os objetos não utilizados
 docker system prune -a -f --volumes
-
-# Reconstruir e iniciar os serviços Docker
-docker-compose up --build
