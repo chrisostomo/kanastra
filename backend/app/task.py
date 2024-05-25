@@ -8,7 +8,7 @@ from .db import SessionLocal
 from .models import Debt
 
 class Task:
-    def __init__(self, redis_client: RedisClient, session_factory):
+    def __init__(self, redis_client: RedisClient, session_factory: Session):
         self.redis_client = redis_client
         self.session_factory = session_factory
 

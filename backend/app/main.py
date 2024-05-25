@@ -4,6 +4,7 @@ from .service import AppService
 from .schemas import TasksResponse
 from .redis_client import RedisClient
 from .db import init_db, SessionLocal
+from starlette.responses import JSONResponse
 
 def create_app() -> FastAPI:
     app = FastAPI()
@@ -28,12 +29,12 @@ def create_app() -> FastAPI:
     @app.post("/upload_csv/")
     async def upload_csv(background_tasks: BackgroundTasks, email: str = Form(...), file: UploadFile = File(...)):
         response, status_code = await app_service.upload_csv(background_tasks, email, file)
-        return response, status_code
+        return JSONResponse(content=response, status_code=status_code)
 
     @app.get("/files/", response_model=TasksResponse)
     async def get_tasks():
         response, status_code = await app_service.get_tasks()
-        return response, status_code
+        return JSONResponse(content=response, status_code=status_code)
 
     return app
 
