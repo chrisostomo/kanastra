@@ -1,230 +1,169 @@
 
-# Sistema de Upload e Gerenciamento de Arquivos Kanasta
+# Kanstra Application
 
-## Visão Geral
+[![Kanstra](https://img.shields.io/badge/Kanstra-FastAPI%20%7C%20Celery%20%7C%20React-blue)](https://github.com/chrisostomo/kanastra)
 
-Este projeto é uma aplicação full-stack projetada para gerenciar uploads de arquivos e manter um histórico atualizado dos arquivos carregados. A aplicação consiste em uma API backend construída com FastAPI e um frontend desenvolvido utilizando React e TypeScript. O sistema permite que os usuários façam upload de arquivos CSV, que são então processados e listados em uma tabela para fácil visualização e gerenciamento.
+## Overview
 
-## Funcionalidades
+Kanstra é uma aplicação que utiliza FastAPI para o backend, Celery para processamento assíncrono, SQLAlchemy para interação com o banco de dados, e Redis para gerenciamento de tarefas. O frontend é desenvolvido usando tecnologias modernas como React ou Vue.js (especificar conforme necessário).
 
-### Backend
-- **Upload de Arquivos**: A API pode receber arquivos CSV através de uma requisição POST.
-- **Processamento em Fila**: Arquivos carregados são enviados para uma fila de processamento assíncrono.
-- **Notificação por Email**: Após a conclusão do processamento, um email é enviado ao usuário que carregou o arquivo.
-- **Integração com Banco de Dados**: Arquivos e seus metadados são armazenados em um banco de dados MySQL.
-- **Fila Redis**: Utiliza Redis para gerenciar tarefas em segundo plano.
+## Princípios SOLID Aplicados
 
-### Frontend
-- **Formulário de Upload de Arquivos**: Um formulário para fazer upload de arquivos CSV.
-- **Listagem de Arquivos**: Uma tabela que lista todos os arquivos carregados, atualizada em tempo real conforme novos arquivos são carregados.
-- **React Context API**: Gerencia o estado entre componentes de maneira eficiente.
-- **Design Responsivo**: Garante usabilidade em diferentes dispositivos.
+### Single Responsibility Principle (SRP)
 
-## Tecnologias Utilizadas
+Cada módulo na aplicação tem uma responsabilidade única:
 
-### Backend
-- **FastAPI**: Para construção dos endpoints da API.
-- **Celery**: Para gerenciamento de tarefas assíncronas.
-- **Redis**: Como broker de mensagens para o Celery.
-- **MySQL**: Banco de dados para armazenar metadados dos arquivos.
-- **Docker**: Containeriza a aplicação para fácil implantação.
+- **Backend**
+  - **`app/main.py`**: Configura a aplicação FastAPI e define os endpoints.
+  - **`app/service.py`**: Contém a lógica de negócios da aplicação.
+  - **`app/db.py`**: Configura a conexão com o banco de dados usando SQLAlchemy.
+  - **`app/models.py`**: Define os modelos de banco de dados.
+  - **`app/redis_client.py`**: Gerencia operações com Redis.
+  - **`app/task.py`**: Implementa tarefas assíncronas com Celery.
 
-### Frontend
-- **React**: Para construção das interfaces de usuário.
-- **TypeScript**: Adiciona segurança de tipos ao JavaScript.
-- **Tailwind CSS**: Para estilização da aplicação.
-- **Vite**: Uma ferramenta de build que proporciona uma experiência de desenvolvimento mais rápida e leve para projetos web modernos.
+### Open/Closed Principle (OCP)
 
-## Começando
+Os módulos estão abertos para extensão, mas fechados para modificação. Por exemplo:
 
-### Pré-requisitos
-- Docker e Docker Compose
-- Node.js e npm
+- **`AppService`**: A classe de serviço pode ser estendida para adicionar novos métodos sem modificar o código existente.
 
-### Instalação
+### Liskov Substitution Principle (LSP)
 
-1. **Clone o repositório**:
-    \`\`\`bash
-    git clone https://github.com/chrisostomo/kanastra
-    cd kanastra
-    \`\`\`
+As subclasses devem ser substituíveis por suas superclasses. Em Python, isso é mais informal, mas seguimos o princípio ao garantir que os objetos possam ser substituídos sem alterar o comportamento esperado.
 
-2. **Configuração do Backend e Frontend**:
-    - Construa e inicie os containers Docker:
-      \`\`\`bash
-      docker-compose up --build
-      \`\`\`
+### Interface Segregation Principle (ISP)
 
-3. **Configuração do Frontend**:
-    - Navegue até o diretório \`frontend\`:
-      \`\`\`bash
-      cd frontend
-      \`\`\`
-    - Instale as dependências:
-      \`\`\`bash
-      npm install
-      \`\`\`
-    - Inicie o servidor de desenvolvimento:
-      \`\`\`bash
-      npm run dev
-      \`\`\`
+Segregamos as responsabilidades em classes e métodos específicos para evitar interfaces inchadas:
 
-### Uso
+- **`AppService`**: Foca na lógica de negócios relacionada ao upload e recuperação de tarefas.
+- **`RedisClient`**: Gerencia operações com Redis de forma isolada.
 
-1. **Upload de Arquivo**:
-   - Acesse o formulário de upload de arquivos em \`http://localhost:8888\`.
-   - Selecione um arquivo CSV e faça o upload.
+### Dependency Inversion Principle (DIP)
 
-2. **Visualizar Arquivos Carregados**:
-   - Navegue até a página de listagem de arquivos para ver todos os arquivos carregados e seus status.
+Utilizamos injeção de dependência para desacoplar as classes:
 
-### Estrutura do Projeto
+- **`AppService`** recebe dependências (`RedisClient` e `SessionLocal`) através do construtor, facilitando a testabilidade e manutenção.
 
-\`\`\`
-kanastra/
+## Estrutura do Projeto
+
+```plaintext
+kanstra/
 ├── backend/
+│   ├── alembic/
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── main.py
+│   │   ├── service.py
+│   │   ├── db.py
 │   │   ├── models.py
-│   │   ├── schemas.py
-│   │   ├── tasks.py
+│   │   ├── redis_client.py
+│   │   ├── task.py
+│   ├── entrypoint.sh
+│   ├── Dockerfile
 │   ├── requirements.txt
-│   └── tests/
-│       ├── unit/
-│       └── integration/
+│   ├── uploads/
+│   └── testes/
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── App.tsx
-│   │   ├── main.tsx
+│   ├── Dockerfile
 │   ├── package.json
+│   ├── src/
+│   ├── public/
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
 │   └── vite.config.ts
-├── .github/
-│   └── workflows/
-│       └── ci.yml
 ├── docker-compose.yml
-├── README.md
-\`\`\`
+└── README.md
+```
 
-### Testes
+## Configuração do Ambiente
 
-- **Testes Unitários e de Integração**: Certifique-se de que todos os testes estejam passando executando:
-  \`\`\`bash
-  cd backend
-  pytest tests/unit
-  pytest tests/integration
-  \`\`\`
+### Requisitos
 
-### Integração Contínua (CI)
+- Docker
+- Docker Compose
+- Python 3.8+
+- Node.js 14+
 
-Este projeto utiliza GitHub Actions para integração contínua. O workflow de CI está definido no arquivo \`.github/workflows/ci.yml\`.
+### Variáveis de Ambiente
 
-1. **Verificar Código**:
-    - Toda vez que um push ou pull request é feito para a branch \`main\`, os testes são executados automaticamente.
+Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
 
-2. **Arquivo de Workflow**:
-    \`\`\`yaml
-    name: CI
-
-    on:
-      push:
-        branches:
-          - main
-      pull_request:
-        branches:
-          - main
-
-    jobs:
-      test:
-        runs-on: ubuntu-latest
-
-        services:
-          mysql:
-            image: mysql:8.0
-            env:
-              MYSQL_ROOT_PASSWORD: example
-              MYSQL_DATABASE: kanastra
-            ports:
-              - 3306:3306
-            options: >-
-              --health-cmd "mysqladmin ping --silent"
-              --health-interval 10s
-              --health-timeout 5s
-              --health-retries 3
-          redis:
-            image: redis:6.2
-            ports:
-              - 6379:6379
-
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-
-        - name: Set up Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.9
-
-        - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r backend/requirements.txt
-
-        - name: Add .env file to backend
-          run: echo "${{ secrets.ENV_VARS }}" > backend/.env
-
-        - name: Run tests
-          env:
-            REDIS_HOST: redis
-            REDIS_PORT: 6379
-            REDIS_DB: 0
-            CELERY_BROKER_URL: redis://redis:6379/0
-            CELERY_RESULT_BACKEND: redis://redis:6379/0
-            DB_HOST: db
-            DB_PORT: 3306
-            DB_USER: root
-            DB_PASSWORD: example
-            DB_NAME: kanastra
-            SMTP_SERVER: smtp.example.com
-            SMTP_PORT: 587
-            SMTP_USERNAME: username
-            SMTP_PASSWORD: password
-            SMTP_FROM_EMAIL: no-reply@example.com
-          run: |
-            docker-compose up -d
-            pytest backend/tests
-    \`\`\`
-
-### Configurando Secrets no GitHub
-
-Para que o arquivo \`.env\` seja criado corretamente durante a execução do workflow, você deve definir \`ENV_VARS\` nos secrets do seu repositório GitHub:
-
-1. Vá para o repositório no GitHub.
-2. Clique em **Settings**.
-3. No menu lateral, clique em **Secrets and variables** e depois em **Actions**.
-4. Clique no botão **New repository secret**.
-5. Adicione um novo secret chamado \`ENV_VARS\` com o seguinte valor:
-
-\`\`\`
+```plaintext
+DB_USER=<your_db_user>
+DB_PASSWORD=<your_db_password>
+DB_HOST=<your_db_host>
+DB_PORT=<your_db_port>
+DB_NAME=<your_db_name>
 REDIS_HOST=redis
 REDIS_PORT=6379
-REDIS_DB=0
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
+SMTP_FROM_EMAIL=<your_smtp_email>
+SMTP_SERVER=<your_smtp_server>
+SMTP_PORT=<your_smtp_port>
+SMTP_USERNAME=<your_smtp_username>
+SMTP_PASSWORD=<your_smtp_password>
+```
 
-DB_HOST=db
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=example
-DB_NAME=kanastra
+### Executando a Aplicação
 
-SMTP_SERVER=smtp.example.com
-SMTP_PORT=587
-SMTP_USERNAME=username
-SMTP_PASSWORD=password
-SMTP_FROM_EMAIL=no-reply@example.com
-\`\`\`
+1. **Clone o repositório:**
 
-Isso garantirá que as variáveis de ambiente necessárias estejam disponíveis para os testes de CI.
+   ```bash
+   git clone https://github.com/chrisostomo/kanastra
+   cd kanstra
+   ```
+
+2. **Inicie os containers com Docker Compose:**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Acesse a aplicação:**
+
+   - Frontend: [http://localhost:8888](http://localhost:8888)
+   - Backend: [http://localhost:8080](http://localhost:8080)
+
+## Testes
+
+### Backend
+
+1. **Instale as dependências de teste no contêiner:**
+
+   ```bash
+   docker exec -it backend pip install -r requirements.txt
+   docker exec -it backend pip install pytest httpx pytest-asyncio
+   ```
+
+2. **Execute os testes:**
+
+   ```bash
+   docker exec -it backend pytest
+   ```
+
+### Frontend
+
+1. **Instale as dependências no contêiner:**
+
+   ```bash
+   docker exec -it frontend npm install
+   ```
+
+2. **Execute os testes:**
+
+   ```bash
+   docker exec -it frontend npm run test
+   ```
+
+## Contribuição
+
+1. Fork o repositório.
+2. Crie uma branch: `git checkout -b minha-branch`.
+3. Faça suas alterações e commit: `git commit -m 'Minha alteração'`.
+4. Envie para o repositório remoto: `git push origin minha-branch`.
+5. Abra um pull request.
+
+## Licença
+
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
