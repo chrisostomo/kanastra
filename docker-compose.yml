@@ -21,7 +21,6 @@ services:
     build:
       context: ./backend
     container_name: backend
-    command: ["sh", "-c", "python /app/init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8080"]
     ports:
       - "8080:8080"
     depends_on:
@@ -29,21 +28,17 @@ services:
       - redis
     env_file:
       - ./.env
-    volumes:
-      - ./backend:/app
 
   worker:
     build:
       context: ./backend
     container_name: celery_worker
-    command: sh -c "sleep 10 && celery -A app.tasks worker --loglevel=info"
+    command: celery -A app.tasks worker --loglevel=info
     depends_on:
       - db
       - redis
     env_file:
       - ./.env
-    volumes:
-      - ./backend:/app
 
   db:
     image: mysql:8.0
@@ -51,10 +46,11 @@ services:
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_ROOT_PASSWORD=example
+      - MYSQL_DATABASE=kanastra
     volumes:
       - db_data:/var/lib/mysql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   redis:
     image: redis:6.2
