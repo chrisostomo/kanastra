@@ -14,11 +14,14 @@ async def upload_csv(request: ProcessCSVRequest, background_tasks: BackgroundTas
     csv_data = request.csv_data
 
     try:
+        # Save file to disk
+        file_path = save_file(csv_data.encode(), f"{email}.csv")
+
         # Store the task in Redis as 'processing'
         task_id = redis_client.create_task(email)
 
         # Notify the user that the task is being processed
-        background_tasks.add_task(process_csv_task, email, csv_data)
+        process_csv_task.delay(file_path, email)
 
         return {"message": "CSV is being processed", "task_id": task_id}
     except Exception as e:
