@@ -17,8 +17,6 @@ const FileList = () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
         const response = await axios.get('http://localhost:8080/files');
-        console.log('API Response:', response.data);  // Log da resposta da API
-        // Transformando a resposta em um array de arquivos
         const transformedFiles = Object.entries(response.data.tasks).map(([key, value]) => ({
           name: key,
           status: value
@@ -26,7 +24,6 @@ const FileList = () => {
         dispatch({ type: 'SET_FILES', payload: transformedFiles });
       } catch (error) {
         const errorMsg = error.response?.data?.message || error.message || 'Erro ao carregar os arquivos.';
-        console.error('API Error:', errorMsg);  // Log do erro da API
         dispatch({ type: 'SET_ERROR', payload: errorMsg });
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -34,6 +31,9 @@ const FileList = () => {
     };
 
     fetchFiles();
+    const intervalId = setInterval(fetchFiles, 5000); // Atualiza a cada 5 segundos
+
+    return () => clearInterval(intervalId); // Limpa o intervalo ao desmontar o componente
   }, [dispatch]);
 
   return (

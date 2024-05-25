@@ -2,17 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { FileProvider } from './context/FileContext';
-import FileUploader from './components/FileUploader';
-import FileList from './components/FileList';
-import { NoMatch } from './components/ui/no-match';
+import Index from './pages/index';
+import NoMatch from './pages/NoMatch/NoMatch.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <FileProvider>
         <Routes>
-          <Route path="/" element={<FileUploader />} />
-          <Route path="/list" element={<FileList />} />
+          <Route path="/" element={<Index />} />
           <Route path="*" element={<NoMatch />} />
         </Routes>
       </FileProvider>
