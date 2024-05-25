@@ -17,9 +17,11 @@ const FileList = () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
         const response = await axios.get('http://localhost:8080/files');
+        console.log('API Response:', response.data);  // Log da resposta da API
         dispatch({ type: 'SET_FILES', payload: response.data });
       } catch (error) {
         const errorMsg = error.response?.data?.message || error.message || 'Erro ao carregar os arquivos.';
+        console.error('API Error:', errorMsg);  // Log do erro da API
         dispatch({ type: 'SET_ERROR', payload: errorMsg });
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -36,7 +38,7 @@ const FileList = () => {
       </h1>
       {loading && <div className="mb-4 text-blue-500">Carregando...</div>}
       {error && <div className="mb-4 text-red-500">{error}</div>}
-      {!loading && !error && (
+      {!loading && !error && Array.isArray(files) && (
         <ul className="w-full max-w-md">
           {files.map((file, index) => (
             <li key={index} className="p-2 border-b border-gray-300">
