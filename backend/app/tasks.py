@@ -11,7 +11,17 @@ class TaskProcessor:
         self.redis_client = redis_client
         self.session_factory = session_factory
 
-    def process_csv_task(self, file_path, email):
+    def process_csv_task(self, file_path: str, email: str) -> dict:
+        """
+        Processa o arquivo CSV e salva os dados no banco de dados.
+
+        Args:
+            file_path (str): Caminho do arquivo CSV.
+            email (str): Email do usuário.
+
+        Returns:
+            dict: Status e mensagem de sucesso ou falha.
+        """
         session = self.session_factory()
         try:
             with open(file_path, 'r') as file:
@@ -27,11 +37,11 @@ class TaskProcessor:
                         debt_id=row['debtId']
                     )
                     batch.append(debt)
-                    if len(batch) >= 100:  # Process in batches of 100
+                    if len(batch) >= 100:  # Processar em lotes de 100
                         session.bulk_save_objects(batch)
                         session.commit()
                         batch = []
-                if batch:  # Process remaining records
+                if batch:  # Processar registros restantes
                     session.bulk_save_objects(batch)
                     session.commit()
             self.redis_client.complete_task(email)
@@ -45,20 +55,43 @@ class TaskProcessor:
         finally:
             session.close()
 
-    def send_email(self, email):
+    def send_email(self, email: str) -> None:
+        """
+        Envia um email notificando que o processamento do CSV foi concluído.
+
+        Args:
+            email (str): Email do usuário.
+        """
         try:
             msg = MIMEText("Your CSV file has been processed.")
             msg['Subject'] = "CSV Processing Complete"
             msg['From'] = "no-reply@example.com"
             msg['To'] = email
 
-            with smtplib.SMTP('smtp.example.com') as server:
-                server.login('username', 'password')
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.example.com')
+            smtp_port = int(os.getenv('SMTP_PORT', 587))
+            smtp_user = os.getenv('SMTP_USER', 'username')
+            smtp_password = os.getenv('SMTP_PASSWORD', 'password')
+
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
                 server.send_message(msg)
         except Exception as e:
             raise Exception(f"Failed to send email: {e}")
 
-def save_file(file_content, file_name, directory='uploads'):
+def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
+    """
+    Salva o conteúdo do arquivo no sistema de arquivos.
+
+    Args:
+        file_content (bytes): Conteúdo do arquivo.
+        file_name (str): Nome do arquivo.
+        directory (str): Diretório onde o arquivo será salvo.
+
+    Returns:
+        str: Caminho do arquivo salvo.
+    """
     try:
         os.makedirs(directory, exist_ok=True)
         file_path = os.path.join(directory, file_name)
@@ -71,5 +104,15 @@ def save_file(file_content, file_name, directory='uploads'):
 task_processor = TaskProcessor(redis_client=redis_client, session_factory=SessionLocal)
 
 @celery.task
-def process_csv_task(file_path, email):
+def process_csv_task(file_path: str, email: str) -> dict:
+    """
+    Tarefa Celery para processar o arquivo CSV.
+
+    Args:
+        file_path (str): Caminho do arquivo CSV.
+        email (str): Email do usuário.
+
+    Returns:
+        dict: Status e mensagem de sucesso ou falha.
+    """
     return task_processor.process_csv_task(file_path, email)

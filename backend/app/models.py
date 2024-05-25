@@ -1,5 +1,4 @@
-import os
-from sqlalchemy import Column, String, Float, Date, create_engine
+from sqlalchemy import Column, String, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -13,16 +12,6 @@ class Debt(Base):
     email = Column(String, index=True)
     debt_amount = Column(Float)
     debt_due_date = Column(Date)
-import os
-from sqlalchemy import create_engine
-from app.models import Base
 
-DATABASE_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-
-def init_db():
-    engine = create_engine(DATABASE_URL)
-    Base.metadata.create_all(bind=engine)
-
-if __name__ == "__main__":
-    init_db()
-
+    def __repr__(self):
+        return f"<Debt(name={self.name}, email={self.email}, debt_amount={self.debt_amount})>"
