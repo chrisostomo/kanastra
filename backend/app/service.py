@@ -39,9 +39,14 @@ class AppService:
     async def get_tasks(self):
         """
         Recupera todas as tarefas do Redis.
+
+        Returns:
+            tuple: (TasksResponse, int) - Uma lista de tarefas com seus status e o código de status HTTP.
         """
         try:
             tasks = self.redis_client.get_all_tasks()
-            return TasksResponse(tasks=tasks)
+            response = TasksResponse(tasks=tasks)
+            return response, 200
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao recuperar as tarefas: {str(e)}")
+
