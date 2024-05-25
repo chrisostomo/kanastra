@@ -7,29 +7,12 @@ from .redis_client import RedisClient
 from .db import SessionLocal
 from .models import Debt
 
-class TaskProcessor:
+class Task:
     def __init__(self, redis_client: RedisClient, session_factory):
-        """
-        Inicializa a classe TaskProcessor com um cliente Redis e uma fábrica de sessões.
-
-        Args:
-            redis_client (Redis): O cliente Redis.
-            session_factory (sessionmaker): A fábrica de sessões do SQLAlchemy.
-        """
         self.redis_client = redis_client
         self.session_factory = session_factory
 
     def process_csv_task(self, file_path: str, email: str) -> dict:
-        """
-        Processa o arquivo CSV e salva os dados no banco de dados.
-
-        Args:
-            file_path (str): Caminho do arquivo CSV.
-            email (str): Email do usuário.
-
-        Returns:
-            dict: Status e mensagem de sucesso ou falha.
-        """
         session = self.session_factory()
         try:
             with open(file_path, 'r') as file:
@@ -45,11 +28,11 @@ class TaskProcessor:
                         debt_id=row['debtId']
                     )
                     batch.append(debt)
-                    if len(batch) >= 100:  # Processar em lotes de 100
+                    if len(batch) >= 100:
                         session.bulk_save_objects(batch)
                         session.commit()
                         batch = []
-                if batch:  # Processar registros restantes
+                if batch:
                     session.bulk_save_objects(batch)
                     session.commit()
             self.complete_task(email)
@@ -63,12 +46,6 @@ class TaskProcessor:
             session.close()
 
     def send_email(self, email: str) -> None:
-        """
-        Envia um email notificando que o processamento do CSV foi concluído.
-
-        Args:
-            email (str): Email do usuário.
-        """
         try:
             msg = MIMEText("Your CSV file has been processed.")
             msg['Subject'] = "CSV Processing Complete"
@@ -88,12 +65,6 @@ class TaskProcessor:
             raise Exception(f"Failed to send email: {e}")
 
     def complete_task(self, email: str) -> None:
-        """
-        Marca uma tarefa como concluída no Redis.
-
-        Args:
-            email (str): O email associado à tarefa.
-        """
         try:
             task_id = f"task:{email}"
             self.redis_client.set(task_id, 'completed')
@@ -101,12 +72,6 @@ class TaskProcessor:
             raise Exception(f"Failed to complete task: {e}")
 
     def fail_task(self, email: str) -> None:
-        """
-        Marca uma tarefa como falhada no Redis.
-
-        Args:
-            email (str): O email associado à tarefa.
-        """
         try:
             task_id = f"task:{email}"
             self.redis_client.set(task_id, 'failed')
@@ -114,17 +79,6 @@ class TaskProcessor:
             raise Exception(f"Failed to fail task: {e}")
 
 def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
-    """
-    Salva o conteúdo do arquivo no sistema de arquivos.
-
-    Args:
-        file_content (bytes): Conteúdo do arquivo.
-        file_name (str): Nome do arquivo.
-        directory (str): Diretório onde o arquivo será salvo.
-
-    Returns:
-        str: Caminho do arquivo salvo.
-    """
     try:
         os.makedirs(directory, exist_ok=True)
         file_path = os.path.join(directory, file_name)
@@ -134,20 +88,9 @@ def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -
     except Exception as e:
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
-# Inicializa o RedisClient e o SessionLocal
 redis_client = RedisClient()
-task_processor = TaskProcessor(redis_client=redis_client, session_factory=SessionLocal)
+task = Task(redis_client=redis_client, session_factory=SessionLocal)
 
 @celery.task
 def process_csv_task(file_path: str, email: str) -> dict:
-    """
-    Tarefa Celery para processar o arquivo CSV.
-
-    Args:
-        file_path (str): Caminho do arquivo CSV.
-        email (str): Email do usuário.
-
-    Returns:
-        dict: Status e mensagem de sucesso ou falha.
-    """
-    return task_processor.process_csv_task(file_path, email)
+    return task.process_csv_task(file_path, email)
