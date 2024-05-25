@@ -16,7 +16,7 @@ const FileList = () => {
     const fetchFiles = async () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        const response = await axios.get('http://localhost:8000/files');
+        const response = await axios.get('http://localhost:8080/files');
         dispatch({ type: 'SET_FILES', payload: response.data });
       } catch (error) {
         const errorMsg = error.response?.data?.message || error.message || 'Erro ao carregar os arquivos.';
