@@ -4,7 +4,6 @@ import axios from 'axios';
 
 interface FileResponse {
   name: string;
-  // Adicione outros campos conforme necessário
 }
 
 const FileUploader = () => {
