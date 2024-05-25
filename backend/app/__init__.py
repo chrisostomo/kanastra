@@ -1,7 +1,7 @@
+import os
 from celery import Celery
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import os
 
 # Inicializa o Celery
 def make_celery(app_name=__name__):
@@ -18,6 +18,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from .models import Base
 
 def init_db():
+    # Criação das tabelas
     Base.metadata.create_all(bind=engine)
 
 # Inicialização do banco de dados
