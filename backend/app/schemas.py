@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Dict
 
+class ProcessCSVRequest(BaseModel):
+    email: str
+    csv_data: str
+
 class TaskStatus(BaseModel):
     """
     Model representing the status of a task.

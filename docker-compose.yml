@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   front:
     build:
@@ -52,6 +54,8 @@ services:
   redis:
     image: redis:6.2
     container_name: redis
+    ports:
+      - "6379:6379"
 
 volumes:
   db_data:
