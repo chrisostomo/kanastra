@@ -6,7 +6,7 @@ from .redis_client import RedisClient
 app = FastAPI()
 redis_client = RedisClient()
 
-@app.post("/upload_csv/")
+@app.post("/process_file/")
 async def upload_csv(background_tasks: BackgroundTasks, email: str = Form(...), file: UploadFile = File(...)):
     try:
         file_content = await file.read()
@@ -22,7 +22,7 @@ async def upload_csv(background_tasks: BackgroundTasks, email: str = Form(...), 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/tasks/", response_model=TasksResponse)
+@app.get("/files/", response_model=TasksResponse)
 async def get_tasks():
     try:
         tasks = redis_client.get_all_tasks()
