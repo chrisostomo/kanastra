@@ -1,9 +1,25 @@
 from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from .tasks import process_csv_task, save_file
 from .schemas import TasksResponse
 from .redis_client import RedisClient
 
 app = FastAPI()
+
+# Configuração do CORS
+origins = [
+    "http://localhost:8888",
+    "http://127.0.0.1:8888",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 redis_client = RedisClient()
 
 @app.post("/process_file/")
