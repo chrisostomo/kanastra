@@ -41,7 +41,7 @@ const FileUploader = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('email', email);
-      const response = await axios.post<FileResponse>('http://localhost:8000/upload', formData);
+      const response = await axios.post<FileResponse>('http://localhost:8080/upload', formData);
       dispatch({ type: 'ADD_FILE', payload: response.data });
       dispatch({ type: 'SET_LOADING', payload: false });
       setMessage('Arquivo enviado com sucesso!');
