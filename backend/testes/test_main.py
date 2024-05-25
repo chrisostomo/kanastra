@@ -1,64 +1,46 @@
-import os
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app, get_db
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.models import Base, Debt
-import shutil
+from main import app, AppDependencies, AppService
+from redis_client import RedisClient
+from models import TasksResponse
+from unittest.mock import Mock, patch
 
-# Definindo URL do banco de dados de teste
-DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(DATABASE_URL)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Fixture para o cliente de testes do FastAPI
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
-# Setup e teardown do banco de dados de teste
-@pytest.fixture(scope="module")
-def test_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+# Fixture para injetar dependências mockadas
+@pytest.fixture
+def app_dependencies():
+    mock_redis_client = Mock(spec=RedisClient)
+    dependencies = AppDependencies(redis_client=mock_redis_client)
+    return dependencies
 
-# Setup e teardown do diretório de uploads
-@pytest.fixture(scope="module")
-def setup_upload_dir():
-    upload_dir = "uploads"
-    os.makedirs(upload_dir, exist_ok=True)
-    yield
-    shutil.rmtree(upload_dir)
+# Teste para o endpoint /process_file/
+def test_upload_csv(client, app_dependencies):
+    # Mock da resposta do RedisClient
+    app_dependencies.redis_client.create_task.return_value = "mock-task-id"
 
-# Fixture do cliente de teste
-@pytest.fixture(scope="module")
-def client(test_db, setup_upload_dir):
-    def override_get_db():
-        try:
-            db = TestingSessionLocal()
-            yield db
-        finally:
-            db.close()
+    # Mock da função save_file
+    with patch('tasks.save_file', return_value="/mock/path/to/file.csv"):
+        response = client.post(
+            "/process_file/",
+            data={"email": "test@example.com"},
+            files={"file": ("test.csv", "name,governmentId,email,debtAmount,debtDueDate,debtId\nJohn Doe,11111111111,johndoe@kanastra.com.br,1000.00,2022-10-10,uuid-1234")}
+        )
 
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as client:
-        yield client
-
-# Teste para upload de arquivo
-def test_upload_file(client):
-    file_path = "test.csv"
-    with open(file_path, "w") as f:
-        f.write("name,governmentId,email,debtAmount,debtDueDate,debtID\n")
-        f.write("John Doe,123456789,john.doe@example.com,1000,2024-05-01,1\n")
-
-    with open(file_path, "rb") as f:
-        response = client.post("/upload", files={"file": f}, data={"email": "test@example.com"})
-
-    os.remove(file_path)
-
-    assert response.status_code == 201
-    assert response.json() == {"message": "File uploaded and processing started"}
-
-# Teste para obtenção de arquivos
-def test_get_files(client):
-    response = client.get("/files")
     assert response.status_code == 200
-    assert len(response.json()) > 0
-    assert response.json()[0]["email"] == "john.doe@example.com"
+    assert response.json() == {"message": "CSV is being processed", "task_id": "mock-task-id"}
+
+# Teste para o endpoint /files/
+def test_get_tasks(client, app_dependencies):
+    # Mock da resposta do RedisClient
+    mock_tasks = [{"id": "mock-task-id", "status": "processing"}]
+    app_dependencies.redis_client.get_all_tasks.return_value = mock_tasks
+
+    response = client.get("/files/")
+
+    assert response.status_code == 200
+    assert response.json() == {"tasks": mock_tasks}

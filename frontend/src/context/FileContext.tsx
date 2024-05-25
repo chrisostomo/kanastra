@@ -1,9 +1,9 @@
-import React, { createContext, useReducer, ReactNode, Dispatch } from 'react';
+import React, { createContext, useReducer, ReactNode, Dispatch, useContext } from 'react';
+import axios from 'axios';
 
-// Definir tipos para o estado
 interface File {
   name: string;
-  // Adicione outros campos conforme necessário
+  status: string;
 }
 
 interface FileState {
@@ -12,30 +12,21 @@ interface FileState {
   error: string | null;
 }
 
-// Estado inicial
 const initialState: FileState = {
   files: [],
   loading: false,
   error: null
 };
 
-// Definir tipos para as ações
 type FileAction =
   | { type: 'ADD_FILE'; payload: File }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'SET_FILES'; payload: File[] };
 
-// Criar o contexto
-const FileContext = createContext<FileContextProps | undefined>(undefined);
+const FileContext = createContext<{ state: FileState; dispatch: Dispatch<FileAction> } | undefined>(undefined);
 
-interface FileContextProps {
-  state: FileState;
-  dispatch: Dispatch<FileAction>;
-}
-
-// Reducer para manipular ações
-function fileReducer(state: FileState, action: FileAction): FileState {
+const fileReducer = (state: FileState, action: FileAction): FileState => {
   switch (action.type) {
     case 'ADD_FILE':
       return { ...state, files: [...state.files, action.payload] };
@@ -48,9 +39,8 @@ function fileReducer(state: FileState, action: FileAction): FileState {
     default:
       return state;
   }
-}
+};
 
-// Provider componente
 export const FileProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(fileReducer, initialState);
 
@@ -61,4 +51,10 @@ export const FileProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export { FileContext };
+export const useFileContext = () => {
+  const context = useContext(FileContext);
+  if (!context) {
+    throw new Error('useFileContext must be used within a FileProvider');
+  }
+  return context;
+};

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NoMatch = () => {
+const Index = () => {
   return (
     <div>
       <h2>Página não encontrada</h2>
@@ -9,4 +9,4 @@ const NoMatch = () => {
   );
 };
 
-export default NoMatch;
+export default Index;

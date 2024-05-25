@@ -1,32 +1,62 @@
-import os
 import pytest
-from unittest.mock import patch
-from tasks import process_file_task, save_file, send_email
+from unittest.mock import patch, mock_open, Mock
+from .tasks import save_file, TaskProcessor, process_csv_task
+from .models import Debt
+from .redis_client import RedisClient
+
+# Teste para a função save_file
+def test_save_file():
+    file_content = b"test content"
+    file_name = "test.csv"
+    directory = "uploads"
+
+    with patch("builtins.open", mock_open()) as mocked_file:
+        file_path = save_file(file_content, file_name, directory)
+        mocked_file.assert_called_once_with(f"{directory}/{file_name}", 'wb')
+        mocked_file().write.assert_called_once_with(file_content)
+        assert file_path == f"{directory}/{file_name}"
+
+# Teste para a função send_email dentro de TaskProcessor
+def test_send_email():
+    email = "test@example.com"
+    task_processor = TaskProcessor(redis_client=Mock(), session_factory=Mock())
+
+    with patch("smtplib.SMTP") as mocked_smtp:
+        task_processor.send_email(email)
+        instance = mocked_smtp.return_value
+        instance.login.assert_called_once_with('username', 'password')
+        instance.send_message.assert_called_once()
+
+# Teste para a função process_csv_task dentro de TaskProcessor
+@pytest.fixture
+def mock_session():
+    with patch("tasks.SessionLocal") as MockSession:
+        yield MockSession.return_value
 
 @pytest.fixture
-def sample_file(tmpdir):
-    content = b"name,governmentId,email,debtAmount,debtDueDate,debtId\nJohn Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-10,1"
-    file_path = os.path.join(tmpdir, "test.csv")
-    with open(file_path, 'wb') as f:
-        f.write(content)
-    return file_path
+def mock_redis_client():
+    with patch("tasks.RedisClient") as MockRedis:
+        yield MockRedis.return_value
 
-def test_save_file(sample_file):
-    content = b"sample content"
-    file_path = save_file(content, "sample.txt", directory=os.path.dirname(sample_file))
-    assert os.path.exists(file_path)
-    with open(file_path, 'rb') as f:
-        assert f.read() == content
+def test_process_csv_task(mock_session, mock_redis_client):
+    mock_session.bulk_save_objects = Mock()
+    mock_session.commit = Mock()
+    mock_session.rollback = Mock()
+    mock_session.close = Mock()
 
-@patch('tasks.send_email')
-def test_process_file_task(mock_send_email, sample_file):
-    mock_send_email.return_value = True
-    result = process_file_task(sample_file)
-    assert result["status"] == "success"
-    assert "File processed successfully" in result["message"]
-    mock_send_email.assert_called_once_with("johndoe@kanastra.com.br")
+    mock_redis_client.complete_task = Mock()
 
-@patch('smtplib.SMTP')
-def test_send_email(mock_smtp):
-    send_email("user@example.com")
-    assert mock_smtp.return_value.send_message.called
+    task_processor = TaskProcessor(redis_client=mock_redis_client, session_factory=lambda: mock_session)
+
+    file_path = "test.csv"
+    email = "test@example.com"
+    file_content = """name,governmentId,email,debtAmount,debtDueDate,debtId
+                      John Doe,11111111111,johndoe@kanastra.com.br,1000.00,2022-10-10,uuid-1234"""
+
+    with patch("builtins.open", mock_open(read_data=file_content)):
+        response = task_processor.process_csv_task(file_path, email)
+        assert response["status"] == "success"
+        assert response["message"] == "File processed successfully"
+        mock_session.bulk_save_objects.assert_called()
+        mock_session.commit.assert_called()
+        mock_redis_client.complete_task.assert_called_once_with(email)

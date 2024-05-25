@@ -5,8 +5,9 @@ import FileList from '../../components/FileList.tsx';
 const Index = () => {
   return (
     <div className="flex flex-col items-center p-4">
-      <FileUploader />
-      <FileList />
+      aaaaaa
+      {/*<FileUploader />*/}
+      {/*<FileList />*/}
     </div>
   );
 };

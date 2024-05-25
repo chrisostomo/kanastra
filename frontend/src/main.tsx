@@ -1,16 +1,16 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { FileProvider } from './context/FileContext';
-import Index from './pages/index';
-import NoMatch from './pages/NoMatch/NoMatch.tsx';
+import IndexPage from './pages/Index';
+import NoMatch from './pages/NoMatch';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <FileProvider>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<IndexPage />} />
           <Route path="*" element={<NoMatch />} />
         </Routes>
       </FileProvider>
