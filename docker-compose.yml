@@ -45,12 +45,13 @@ services:
     container_name: database
     ports:
       - "3306:3306"
+    env_file:
+      - ./.env
     environment:
-      - MYSQL_ROOT_PASSWORD=example
-      - MYSQL_DATABASE=kanastra
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   redis:
     image: redis:6.2

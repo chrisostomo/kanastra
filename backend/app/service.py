@@ -3,12 +3,20 @@ from .tasks import save_file, process_csv_task
 from .schemas import TasksResponse
 from .redis_client import RedisClient
 
+from .redis_client import RedisClient
+from .db import SessionLocal
+
 class AppService:
-    def __init__(self, redis_client: RedisClient):
+    def __init__(self, redis_client: RedisClient, session_factory):
         """
-        Inicializa a classe AppService com um cliente Redis.
+        Inicializa a classe AppService com um cliente Redis e uma fábrica de sessões.
+
+        Args:
+            redis_client (RedisClient): O cliente Redis.
+            session_factory (sessionmaker): A fábrica de sessões do SQLAlchemy.
         """
         self.redis_client = redis_client
+        self.session_factory = session_factory
 
     async def upload_csv(self, background_tasks: BackgroundTasks, email: str, file: UploadFile):
         """

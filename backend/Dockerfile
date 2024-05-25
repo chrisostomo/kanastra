@@ -20,5 +20,8 @@ EXPOSE 8080
 # Adiciona as variáveis de ambiente do arquivo .env
 COPY .env /app/
 
-# Executa as migrações antes de iniciar a aplicação
-CMD ["bash", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+# Copia o script de entrada
+COPY entrypoint.sh /app/entrypoint.sh
+
+# Define o script de entrada como ponto de entrada
+ENTRYPOINT ["/app/entrypoint.sh"]
