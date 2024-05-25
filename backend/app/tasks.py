@@ -13,5 +13,6 @@ def process_csv_task(email: str, csv_data: str):
         redis_client.complete_task(email)
     except Exception as e:
         # Handle processing error
-        redis_client.create_task(email, "failed")
+        task_id = f"task:{email}"
+        redis_client.client.set(task_id, "failed")
         raise e
