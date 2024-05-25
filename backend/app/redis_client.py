@@ -2,7 +2,7 @@ from redis import Redis
 
 class RedisClient:
     def __init__(self):
-        self.client = Redis(host='localhost', port=6379, db=0)
+        self.client = Redis(host='redis', port=6379, db=0)
 
     def create_task(self, email: str):
         task_id = f"task:{email}"
