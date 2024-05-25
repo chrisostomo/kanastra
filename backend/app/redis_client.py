@@ -1,6 +1,11 @@
 import redis
 import uuid
 import os
+from dotenv import load_dotenv
+
+
+# Carrega variáveis do .env
+load_dotenv()
 
 class RedisClient:
     def __init__(self):
@@ -10,7 +15,8 @@ class RedisClient:
         try:
             redis_host = os.getenv('REDIS_HOST', 'redis')
             redis_port = int(os.getenv('REDIS_PORT', 6379))
-            self.client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, decode_responses=True)
+            redis_db = int(os.getenv('REDIS_DB', 0))
+            self.client = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
         except Exception as e:
             print(f"Erro ao inicializar o cliente Redis: {e}")
             raise

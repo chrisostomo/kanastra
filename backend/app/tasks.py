@@ -9,6 +9,13 @@ from .models import Debt
 
 class TaskProcessor:
     def __init__(self, redis_client: RedisClient, session_factory):
+        """
+        Inicializa a classe TaskProcessor com um cliente Redis e uma fábrica de sessões.
+
+        Args:
+            redis_client (Redis): O cliente Redis.
+            session_factory (sessionmaker): A fábrica de sessões do SQLAlchemy.
+        """
         self.redis_client = redis_client
         self.session_factory = session_factory
 
@@ -45,13 +52,12 @@ class TaskProcessor:
                 if batch:  # Processar registros restantes
                     session.bulk_save_objects(batch)
                     session.commit()
-            self.redis_client.complete_task(email)
+            self.complete_task(email)
             self.send_email(email)
             return {"status": "success", "message": "File processed successfully"}
         except Exception as e:
             session.rollback()
-            task_id = f"task:{email}"
-            self.redis_client.client.set(task_id, "failed")
+            self.fail_task(email)
             raise Exception(f"Failed to process CSV: {e}")
         finally:
             session.close()
@@ -66,13 +72,13 @@ class TaskProcessor:
         try:
             msg = MIMEText("Your CSV file has been processed.")
             msg['Subject'] = "CSV Processing Complete"
-            msg['From'] = "no-reply@example.com"
+            msg['From'] = os.getenv('SMTP_FROM_EMAIL')
             msg['To'] = email
 
-            smtp_server = os.getenv('SMTP_SERVER', 'smtp.example.com')
-            smtp_port = int(os.getenv('SMTP_PORT', 587))
-            smtp_user = os.getenv('SMTP_USER', 'username')
-            smtp_password = os.getenv('SMTP_PASSWORD', 'password')
+            smtp_server = os.getenv('SMTP_SERVER')
+            smtp_port = int(os.getenv('SMTP_PORT'))
+            smtp_user = os.getenv('SMTP_USERNAME')
+            smtp_password = os.getenv('SMTP_PASSWORD')
 
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
@@ -80,6 +86,32 @@ class TaskProcessor:
                 server.send_message(msg)
         except Exception as e:
             raise Exception(f"Failed to send email: {e}")
+
+    def complete_task(self, email: str) -> None:
+        """
+        Marca uma tarefa como concluída no Redis.
+
+        Args:
+            email (str): O email associado à tarefa.
+        """
+        try:
+            task_id = f"task:{email}"
+            self.redis_client.set(task_id, 'completed')
+        except Exception as e:
+            raise Exception(f"Failed to complete task: {e}")
+
+    def fail_task(self, email: str) -> None:
+        """
+        Marca uma tarefa como falhada no Redis.
+
+        Args:
+            email (str): O email associado à tarefa.
+        """
+        try:
+            task_id = f"task:{email}"
+            self.redis_client.set(task_id, 'failed')
+        except Exception as e:
+            raise Exception(f"Failed to fail task: {e}")
 
 def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
     """
@@ -102,6 +134,7 @@ def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -
     except Exception as e:
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
+# Inicializa o RedisClient e o SessionLocal
 redis_client = RedisClient()
 task_processor = TaskProcessor(redis_client=redis_client, session_factory=SessionLocal)
 

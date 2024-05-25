@@ -12,10 +12,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 # Instala as dependências de teste e outros pacotes adicionais
-RUN pip install pytest pytest-asyncio pymysql
+RUN pip install pytest pytest-asyncio pymysql alembic python-dotenv
 
 # Exposição da porta 8080
 EXPOSE 8080
 
-# Comando para iniciar a aplicação
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Adiciona as variáveis de ambiente do arquivo .env
+COPY .env /app/
+
+# Executa as migrações antes de iniciar a aplicação
+CMD ["bash", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8080"]

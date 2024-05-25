@@ -3,12 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .service import AppService
 from .schemas import TasksResponse
 from .redis_client import RedisClient
-from .db import init_db
-from .celery import celery
+from .db import init_db, SessionLocal
 
 def create_app() -> FastAPI:
     """
     Cria e configura a aplicação FastAPI.
+
+    Returns:
+        FastAPI: Instância da aplicação FastAPI.
     """
     app = FastAPI()
 
@@ -26,33 +28,43 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Inicialização das dependências
     redis_client = RedisClient()
-    app_service = AppService(redis_client=redis_client)
+    session_factory = SessionLocal
+    app_service = AppService(redis_client, session_factory)
 
     @app.post("/upload_csv/")
     async def upload_csv(background_tasks: BackgroundTasks, email: str = Form(...), file: UploadFile = File(...)):
         """
-        Endpoint para upload de CSV.
+        Endpoint para upload de arquivo CSV.
+
+        Args:
+            background_tasks (BackgroundTasks): Tarefas em segundo plano.
+            email (str): Email do usuário.
+            file (UploadFile): Arquivo CSV enviado.
+
+        Returns:
+            dict: Mensagem de status e ID da tarefa.
+            int: Código de status HTTP.
         """
-        return await app_service.upload_csv(background_tasks, email, file)
+        response, status_code = await app_service.upload_csv(background_tasks, email, file)
+        return response, status_code
 
     @app.get("/files/", response_model=TasksResponse)
     async def get_tasks():
         """
         Endpoint para listar tarefas.
+
+        Returns:
+            TasksResponse: Lista de tarefas com seus status.
+            int: Código de status HTTP.
         """
-        return await app_service.get_tasks()
+        response, status_code = await app_service.get_tasks()
+        return response, status_code
 
     return app
 
-# Inicialização do banco de dados
+# Inicializa o banco de dados
 init_db()
 
-# Criação da aplicação FastAPI
+# Cria a aplicação FastAPI
 app = create_app()
-
-# Entry point for Uvicorn
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
