@@ -1,8 +1,10 @@
-from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks, HTTPException
+from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from .tasks import task_processor, save_file, process_csv_task
+from .service import AppService
 from .schemas import TasksResponse
 from .redis_client import RedisClient
+from .db import init_db
+from .celery import celery
 
 def create_app() -> FastAPI:
     """
@@ -44,37 +46,13 @@ def create_app() -> FastAPI:
 
     return app
 
-class AppService:
-    def __init__(self, redis_client: RedisClient):
-        """
-        Inicializa a classe AppService com um cliente Redis.
-        """
-        self.redis_client = redis_client
+# Inicialização do banco de dados
+init_db()
 
-    async def upload_csv(self, background_tasks: BackgroundTasks, email: str, file: UploadFile):
-        """
-        Faz o upload de um arquivo CSV e inicia o processamento em background.
-        """
-        try:
-            file_content = await file.read()
-            file_path = save_file(file_content, file.filename)
+# Criação da aplicação FastAPI
+app = create_app()
 
-            # Armazena a tarefa no Redis como 'processing'
-            task_id = self.redis_client.create_task(email)
-
-            # Notifica o usuário que a tarefa está sendo processada
-            background_tasks.add_task(process_csv_task, file_path, email)
-
-            return {"message": "CSV is being processed", "task_id": task_id}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erro ao processar o CSV: {str(e)}")
-
-    async def get_tasks(self):
-        """
-        Recupera todas as tarefas do Redis.
-        """
-        try:
-            tasks = self.redis_client.get_all_tasks()
-            return TasksResponse(tasks=tasks)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erro ao recuperar as tarefas: {str(e)}")
+# Entry point for Uvicorn
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)

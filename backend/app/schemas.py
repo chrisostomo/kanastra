@@ -4,6 +4,7 @@ from typing import List
 class Task(BaseModel):
     id: str
     status: str
+    message: str  # Novo campo para incluir mensagens adicionais
 
     class Config:
         orm_mode = True

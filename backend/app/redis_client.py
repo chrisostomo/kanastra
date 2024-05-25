@@ -1,6 +1,6 @@
 import redis
 import uuid
-
+import os
 
 class RedisClient:
     def __init__(self):
@@ -8,7 +8,9 @@ class RedisClient:
         Inicializa o cliente Redis.
         """
         try:
-            self.client = redis.StrictRedis(host='redis', port=6379, db=0, decode_responses=True)
+            redis_host = os.getenv('REDIS_HOST', 'redis')
+            redis_port = int(os.getenv('REDIS_PORT', 6379))
+            self.client = redis.StrictRedis(host=redis_host, port=redis_port, db=0, decode_responses=True)
         except Exception as e:
             print(f"Erro ao inicializar o cliente Redis: {e}")
             raise
@@ -32,15 +34,14 @@ class RedisClient:
             print(f"Erro ao criar a tarefa: {e}")
             raise
 
-    def complete_task(self, email: str) -> None:
+    def complete_task(self, task_id: str) -> None:
         """
         Marca uma tarefa como concluída no Redis.
 
         Args:
-            email (str): O email associado à tarefa.
+            task_id (str): O ID da tarefa.
         """
         try:
-            task_id = f"task:{email}"
             self.client.set(task_id, 'completed')
         except Exception as e:
             print(f"Erro ao completar a tarefa: {e}")
