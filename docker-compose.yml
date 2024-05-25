@@ -33,7 +33,7 @@ services:
     build:
       context: ./backend
     container_name: celery_worker
-    command: celery -A app.tasks worker --loglevel=info
+    command: sh -c "sleep 10 && celery -A app.tasks worker --loglevel=info"
     depends_on:
       - db
       - redis
