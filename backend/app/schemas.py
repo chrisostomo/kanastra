@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import List
 
-class TaskStatus(BaseModel):
-    task_id: str
+class Task(BaseModel):
+    id: str
     status: str
 
 class TasksResponse(BaseModel):
-    tasks: Dict[str, str]
+    tasks: List[Task]

@@ -1,17 +1,14 @@
 from celery import Celery
 import os
 import csv
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Debt
+from .models import Debt, engine
 import smtplib
 from email.mime.text import MIMEText
 from .redis_client import RedisClient
 
 app = Celery('app.tasks', broker='redis://redis:6379/0', backend='redis://redis:6379/0')
 
-DATABASE_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class TaskProcessor:

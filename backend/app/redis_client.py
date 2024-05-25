@@ -1,23 +1,21 @@
-from redis import Redis
+import redis
+import uuid
 
 class RedisClient:
     def __init__(self):
-        self.client = Redis(host='redis', port=6379, db=0)
+        self.client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
-    def create_task(self, email: str):
-        task_id = f"task:{email}"
-        self.client.set(task_id, "processing")
+    def create_task(self, email):
+        task_id = str(uuid.uuid4())
+        self.client.set(task_id, 'processing')
+        self.client.rpush('tasks', task_id)
         return task_id
 
-    def get_all_tasks(self):
-        keys = self.client.keys("task:*")
-        tasks = {}
-        for key in keys:
-            task_id = key.decode('utf-8')
-            status = self.client.get(task_id).decode('utf-8')
-            tasks[task_id] = status
-        return tasks
-
-    def complete_task(self, email: str):
+    def complete_task(self, email):
         task_id = f"task:{email}"
-        self.client.set(task_id, "completed")
+        self.client.set(task_id, 'completed')
+
+    def get_all_tasks(self):
+        task_ids = self.client.lrange('tasks', 0, -1)
+        tasks = [{"id": task_id, "status": self.client.get(task_id)} for task_id in task_ids]
+        return tasks
