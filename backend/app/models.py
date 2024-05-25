@@ -6,10 +6,10 @@ Base = declarative_base()
 class Debt(Base):
     __tablename__ = 'debts'
 
-    debt_id = Column(String, primary_key=True, index=True)
-    name = Column(String, index=True)
-    government_id = Column(String, unique=True, index=True)
-    email = Column(String, index=True)
+    debt_id = Column(String(50), primary_key=True, index=True)
+    name = Column(String(100), index=True)
+    government_id = Column(String(20), unique=True, index=True)
+    email = Column(String(100), index=True)
     debt_amount = Column(Float)
     debt_due_date = Column(Date)
 

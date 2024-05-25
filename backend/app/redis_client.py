@@ -70,3 +70,33 @@ class RedisClient:
         except Exception as e:
             print(f"Erro ao recuperar as tarefas: {e}")
             raise
+
+    def set(self, key: str, value: str) -> None:
+        """
+        Define um valor no Redis.
+
+        Args:
+            key (str): A chave.
+            value (str): O valor.
+        """
+        try:
+            self.client.set(key, value)
+        except Exception as e:
+            print(f"Erro ao definir a chave no Redis: {e}")
+            raise
+
+    def get(self, key: str) -> str:
+        """
+        Recupera um valor do Redis.
+
+        Args:
+            key (str): A chave.
+
+        Returns:
+            str: O valor.
+        """
+        try:
+            return self.client.get(key)
+        except Exception as e:
+            print(f"Erro ao recuperar a chave do Redis: {e}")
+            raise

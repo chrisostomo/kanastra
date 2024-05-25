@@ -2,7 +2,7 @@ import os
 import csv
 import smtplib
 from email.mime.text import MIMEText
-from sqlalchemy.orm import Session  # Adicione esta linha
+from sqlalchemy.orm import Session
 from .celery import celery
 from .redis_client import RedisClient
 from .db import SessionLocal
