@@ -8,7 +8,7 @@ from .redis_client import RedisClient
 app = FastAPI()
 redis_client = RedisClient()
 
-@app.post("/upload_csv/", response_model=TasksResponse)
+@app.post("/upload_csv/")
 async def upload_csv(request: ProcessCSVRequest, background_tasks: BackgroundTasks):
     email = request.email
     csv_data = request.csv_data
