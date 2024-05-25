@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import Column, String, Float, Date, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
