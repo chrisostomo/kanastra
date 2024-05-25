@@ -1,19 +1,22 @@
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from pydantic import BaseModel
+from typing import Dict
 
-class DebtBase(BaseModel):
-    name: str
-    governmentId: str
-    email: EmailStr
-    debtAmount: int
-    debtDueDate: datetime
-    debtID: str
+class TaskStatus(BaseModel):
+    """
+    Model representing the status of a task.
 
-class DebtCreate(DebtBase):
-    pass
+    Attributes:
+        task_id (str): The unique identifier of the task.
+        status (str): The status of the task (e.g., 'processing', 'completed', 'failed').
+    """
+    task_id: str
+    status: str
 
-class Debt(DebtBase):
-    id: int
+class TasksResponse(BaseModel):
+    """
+    Model representing a response with multiple task statuses.
 
-    class Config:
-        orm_mode = True
+    Attributes:
+        tasks (Dict[str, str]): A dictionary mapping task IDs to their statuses.
+    """
+    tasks: Dict[str, str]

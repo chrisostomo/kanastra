@@ -8,7 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from .redis_client import RedisClient
 
-app = Celery('tasks', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
+app = Celery('app.tasks', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
 
 DATABASE_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 engine = create_engine(DATABASE_URL)

@@ -1,22 +1,15 @@
-from pydantic import BaseModel
-from typing import Dict
+from sqlalchemy import Column, String, Float, Date
+from sqlalchemy.ext.declarative import declarative_base
 
-class TaskStatus(BaseModel):
-    """
-    Model representing the status of a task.
+Base = declarative_base()
 
-    Attributes:
-        task_id (str): The unique identifier of the task.
-        status (str): The status of the task (e.g., 'processing', 'completed', 'failed').
-    """
-    task_id: str
-    status: str
+class Debt(Base):
+    __tablename__ = 'debts'
 
-class TasksResponse(BaseModel):
-    """
-    Model representing a response with multiple task statuses.
-
-    Attributes:
-        tasks (Dict[str, str]): A dictionary mapping task IDs to their statuses.
-    """
-    tasks: Dict[str, str]
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, index=True)
+    government_id = Column(String, index=True)
+    email = Column(String, index=True)
+    debt_amount = Column(Float)
+    debt_due_date = Column(Date)
+    debt_id = Column(String, unique=True, index=True)
