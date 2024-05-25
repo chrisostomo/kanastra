@@ -1,20 +1,15 @@
-from sqlalchemy import Column, Integer, String, DateTime, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-import os
+from pydantic import BaseModel
+from typing import Dict
 
-DATABASE_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+class TaskStatus(BaseModel):
+    """
+    Model representing the status of a task.
+    """
+    task_id: str
+    status: str
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-class Debt(Base):
-    __tablename__ = "debts"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    governmentId = Column(String, index=True)
-    email = Column(String, index=True)
-    debtAmount = Column(Integer)
-    debtDueDate = Column(DateTime)
-    debtID = Column(String, unique=True, index=True)
+class TasksResponse(BaseModel):
+    """
+    Model representing a response with multiple task statuses.
+    """
+    tasks: Dict[str, str]

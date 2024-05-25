@@ -8,3 +8,4 @@ celery==5.2.6
 anyio==3.6.1
 pymysql
 cryptography
+python-dotenv

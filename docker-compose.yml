@@ -24,14 +24,8 @@ services:
     depends_on:
       - db
       - redis
-    environment:
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: example
-      DB_NAME: kanastra
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    env_file:
+      - ./.env
 
   db:
     image: mysql:8.0
