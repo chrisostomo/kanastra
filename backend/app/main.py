@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks
+from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .service import AppService
 from .schemas import TasksResponse
@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
     @app.get("/files/", response_model=TasksResponse)
     async def get_tasks():
         response, status_code = await app_service.get_tasks()
-        return JSONResponse(content=response, status_code=status_code)
+        return JSONResponse(content=response.dict(), status_code=status_code)
 
     return app
 
