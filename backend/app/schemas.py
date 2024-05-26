@@ -1,10 +1,11 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
-class TaskResponse(BaseModel):
-    id: str
+class TaskStatusResponse(BaseModel):
+    task_id: str
     status: str
-    message: str
+    message: Optional[str]
+    details: Optional[str]
 
 class TasksResponse(BaseModel):
-    tasks: List[TaskResponse]
+    tasks: List[TaskStatusResponse]

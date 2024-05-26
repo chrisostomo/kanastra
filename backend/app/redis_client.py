@@ -62,7 +62,7 @@ class RedisClient:
         try:
             self.client.set(task_id, 'failed')
         except Exception as e:
-            print(f"Erro ao falhar a tarefa: {e}")
+            print(f"Erro ao marcar a tarefa como falhada: {e}")
             raise
 
     def get_all_tasks(self):
@@ -78,7 +78,8 @@ class RedisClient:
             for task_id in task_ids:
                 task_status = self.client.get(task_id)
                 task_message = self.client.get(f'{task_id}_message') or 'No message available'
-                tasks.append({"id": task_id, "status": task_status, "message": task_message})
+                task_details = self.client.get(f'{task_id}_details') or 'No details available'
+                tasks.append({"task_id": task_id, "status": task_status, "message": task_message, "details": task_details})
             return tasks
         except Exception as e:
             print(f"Erro ao recuperar as tarefas: {e}")

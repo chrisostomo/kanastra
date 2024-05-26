@@ -1,23 +1,25 @@
 import os
 import csv
 import smtplib
+import time
 from email.mime.text import MIMEText
-from fastapi import BackgroundTasks, UploadFile, HTTPException, Form
+from fastapi import BackgroundTasks, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .celery import celery
 from .redis_client import RedisClient
 from .db import SessionLocal
 from .models import Debt
+from .schemas import TasksResponse
 
 class AppService:
     def __init__(self, redis_client: RedisClient, session_factory: Session):
         self.redis_client = redis_client
         self.session_factory = session_factory
 
-    def process_csv_task(self, file_path: str, email: str) -> dict:
+    def process_csv_task(self, file_path: str, email: str, task_id: str) -> dict:
         session = self.session_factory()
-        task_id = self.redis_client.create_task(email)
+        start_time = time.time()
         try:
             with open(file_path, 'r') as file:
                 reader = csv.DictReader(file)
@@ -28,6 +30,7 @@ class AppService:
             existing_ids = set([eid[0] for eid in existing_ids])
 
             batch = []
+            boletos_emitidos = 0
             for row in rows:
                 if row['governmentId'] not in existing_ids:
                     debt = {
@@ -40,6 +43,7 @@ class AppService:
                     }
                     batch.append(debt)
                     existing_ids.add(row['governmentId'])
+                    boletos_emitidos += 1
                 if len(batch) >= 100:
                     session.bulk_insert_mappings(Debt, batch)
                     session.commit()
@@ -48,12 +52,16 @@ class AppService:
                 session.bulk_insert_mappings(Debt, batch)
                 session.commit()
 
+            end_time = time.time()
+            processing_time = end_time - start_time
+
             self.redis_client.complete_task(task_id)
             try:
                 self.send_email(email)
             except Exception as e:
                 self.redis_client.set(f'{task_id}_message', f'Processed but failed to send email: {e}')
-            return {"status": "success", "message": "File processed successfully"}
+            self.redis_client.set(f'{task_id}_details', f'Time: {processing_time}s, Boletos: {boletos_emitidos}')
+            return {"status": "success", "message": "File processed successfully", "processing_time": processing_time, "boletos_emitidos": boletos_emitidos}
         except IntegrityError as e:
             session.rollback()
             self.redis_client.fail_task(task_id)
@@ -88,8 +96,9 @@ class AppService:
         try:
             contents = await file.read()
             file_path = save_file(contents, file.filename)
-            background_tasks.add_task(process_csv_task, file_path=file_path, email=email)
-            return {"filename": file.filename}, 202
+            task_id = self.redis_client.create_task(email)
+            background_tasks.add_task(process_csv_task, file_path=file_path, email=email, task_id=task_id)
+            return {"filename": file.filename, "task_id": task_id}, 202
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -108,6 +117,6 @@ def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
 @celery.task
-def process_csv_task(file_path: str, email: str) -> dict:
+def process_csv_task(file_path: str, email: str, task_id: str) -> dict:
     service = AppService(redis_client=RedisClient(), session_factory=SessionLocal)
-    return service.process_csv_task(file_path, email)
+    return service.process_csv_task(file_path, email, task_id)

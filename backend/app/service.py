@@ -1,6 +1,7 @@
 import os
 import csv
 import smtplib
+import uuid
 from email.mime.text import MIMEText
 from fastapi import BackgroundTasks, UploadFile, HTTPException
 from sqlalchemy.orm import Session
@@ -9,15 +10,16 @@ from .celery import celery
 from .redis_client import RedisClient
 from .db import SessionLocal
 from .models import Debt
-from .schemas import TasksResponse
+from .schemas import TaskStatusResponse, TasksResponse
 
 class AppService:
     def __init__(self, redis_client: RedisClient, session_factory: Session):
         self.redis_client = redis_client
         self.session_factory = session_factory
 
-    def process_csv_task(self, file_path: str, email: str, task_id: str) -> dict:
+    def process_csv_task(self, file_path: str, email: str) -> dict:
         session = self.session_factory()
+        task_id = self.redis_client.create_task(email)
         try:
             with open(file_path, 'r') as file:
                 reader = csv.DictReader(file)
@@ -53,7 +55,7 @@ class AppService:
                 self.send_email(email)
             except Exception as e:
                 self.redis_client.set(f'{task_id}_message', f'Processed but failed to send email: {e}')
-            return {"status": "success", "message": "File processed successfully"}
+            return {"status": "success", "message": "File processed successfully", "task_id": task_id}
         except IntegrityError as e:
             session.rollback()
             self.redis_client.fail_task(task_id)
@@ -87,9 +89,8 @@ class AppService:
     async def upload_csv(self, background_tasks: BackgroundTasks, email: str, file: UploadFile):
         try:
             contents = await file.read()
-            file_path = save_file(contents, file.filename)
-            task_id = self.redis_client.create_task(email)
-            background_tasks.add_task(process_csv_task, file_path=file_path, email=email, task_id=task_id)
+            task_id, file_path = save_file(contents, file.filename)
+            background_tasks.add_task(process_csv_task, file_path=file_path, email=email)
             return {"filename": file.filename, "task_id": task_id}, 202
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -98,17 +99,26 @@ class AppService:
         tasks = self.redis_client.get_all_tasks()
         return TasksResponse(tasks=tasks), 200
 
-def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
+    def get_task_status(self, task_id: str) -> TaskStatusResponse:
+        try:
+            status = self.redis_client.get(task_id)
+            message = self.redis_client.get(f'{task_id}_message')
+            return TaskStatusResponse(task_id=task_id, status=status, message=message)
+        except Exception as e:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> tuple:
     try:
         os.makedirs(directory, exist_ok=True)
-        file_path = os.path.join(directory, file_name)
+        task_id = str(uuid.uuid4())
+        file_path = os.path.join(directory, f"{task_id}_{file_name}")
         with open(file_path, 'wb') as f:
             f.write(file_content)
-        return file_path
+        return task_id, file_path
     except Exception as e:
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
 @celery.task
-def process_csv_task(file_path: str, email: str, task_id: str) -> dict:
+def process_csv_task(file_path: str, email: str) -> dict:
     service = AppService(redis_client=RedisClient(), session_factory=SessionLocal)
-    return service.process_csv_task(file_path, email, task_id)
+    return service.process_csv_task(file_path, email)

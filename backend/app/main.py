@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .service import AppService
-from .schemas import TasksResponse
+from .schemas import TasksResponse, TaskStatusResponse
 from .redis_client import RedisClient
 from .db import init_db, SessionLocal
 from starlette.responses import JSONResponse
@@ -31,10 +31,18 @@ def create_app() -> FastAPI:
         response, status_code = await app_service.upload_csv(background_tasks, email, file)
         return JSONResponse(content=response, status_code=status_code)
 
-    @app.get("/files/", response_model=TasksResponse)
+    @app.get("/tasks/", response_model=TasksResponse)
     async def get_tasks():
         response, status_code = await app_service.get_tasks()
         return JSONResponse(content=response.dict(), status_code=status_code)
+
+    @app.get("/tasks/{task_id}", response_model=TaskStatusResponse)
+    async def get_task_status(task_id: str):
+        try:
+            task_status = app_service.get_task_status(task_id)
+            return JSONResponse(content=task_status.dict(), status_code=200)
+        except Exception as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
     return app
 
