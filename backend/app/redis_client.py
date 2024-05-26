@@ -52,6 +52,19 @@ class RedisClient:
             print(f"Erro ao completar a tarefa: {e}")
             raise
 
+    def fail_task(self, task_id: str) -> None:
+        """
+        Marca uma tarefa como falhada no Redis.
+
+        Args:
+            task_id (str): O ID da tarefa.
+        """
+        try:
+            self.client.set(task_id, 'failed')
+        except Exception as e:
+            print(f"Erro ao falhar a tarefa: {e}")
+            raise
+
     def get_all_tasks(self):
         """
         Recupera todas as tarefas armazenadas no Redis.

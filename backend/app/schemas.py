@@ -1,22 +1,10 @@
 from pydantic import BaseModel
 from typing import List
 
-class Task(BaseModel):
+class TaskResponse(BaseModel):
     id: str
     status: str
-    message: str  # Novo campo para incluir mensagens adicionais
-
-    class Config:
-        orm_mode = True
-        """
-        Permite a compatibilidade com objetos ORM.
-        """
+    message: str
 
 class TasksResponse(BaseModel):
-    tasks: List[Task]
-
-    class Config:
-        orm_mode = True
-        """
-        Permite a compatibilidade com objetos ORM.
-        """
+    tasks: List[TaskResponse]
