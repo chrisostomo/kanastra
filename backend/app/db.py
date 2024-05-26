@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from .models import Base
 from dotenv import load_dotenv
@@ -18,10 +18,16 @@ except Exception as e:
 
 def init_db() -> None:
     """
-    Cria as tabelas do banco de dados.
+    Cria as tabelas do banco de dados, se elas ainda não existirem.
     """
     try:
-        Base.metadata.create_all(bind=engine)
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        if 'debts' not in tables:
+            Base.metadata.create_all(bind=engine)
+            print("Tabelas criadas com sucesso.")
+        else:
+            print("Tabelas já existem.")
     except Exception as e:
         print(f"Erro ao inicializar o banco de dados: {e}")
         raise
