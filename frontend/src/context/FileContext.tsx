@@ -3,17 +3,25 @@ import axios from 'axios';
 
 interface File {
   name: string;
+  taskId: string;
+}
+
+interface Task {
+  id: string;
   status: string;
+  message: string;
 }
 
 interface FileState {
   files: File[];
+  tasks: Task[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: FileState = {
   files: [],
+  tasks: [],
   loading: false,
   error: null
 };
@@ -22,7 +30,8 @@ type FileAction =
   | { type: 'ADD_FILE'; payload: File }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string }
-  | { type: 'SET_FILES'; payload: File[] };
+  | { type: 'SET_FILES'; payload: File[] }
+  | { type: 'SET_TASKS'; payload: Task[] };
 
 const FileContext = createContext<{ state: FileState; dispatch: Dispatch<FileAction> } | undefined>(undefined);
 
@@ -36,6 +45,8 @@ const fileReducer = (state: FileState, action: FileAction): FileState => {
       return { ...state, error: action.payload };
     case 'SET_FILES':
       return { ...state, files: action.payload, loading: false };
+    case 'SET_TASKS':
+      return { ...state, tasks: action.payload, loading: false };
     default:
       return state;
   }

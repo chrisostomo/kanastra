@@ -11,6 +11,7 @@ from .redis_client import RedisClient
 from .db import SessionLocal
 from .models import Debt
 from .schemas import TaskStatusResponse, TasksResponse
+import logging
 
 class AppService:
     def __init__(self, redis_client: RedisClient, session_factory: Session):
@@ -55,14 +56,17 @@ class AppService:
                 self.send_email(email)
             except Exception as e:
                 self.redis_client.set(f'{task_id}_message', f'Processed but failed to send email: {e}')
+                logging.error(f"Failed to send email: {e}")
             return {"status": "success", "message": "File processed successfully", "task_id": task_id}
         except IntegrityError as e:
             session.rollback()
             self.redis_client.fail_task(task_id)
+            logging.error(f"IntegrityError while processing CSV: {e}")
             raise Exception(f"Failed to process CSV due to IntegrityError: {e}")
         except Exception as e:
             session.rollback()
             self.redis_client.fail_task(task_id)
+            logging.error(f"Error while processing CSV: {e}")
             raise Exception(f"Failed to process CSV: {e}")
         finally:
             session.close()
