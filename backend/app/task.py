@@ -1,8 +1,10 @@
 import os
 import csv
 import smtplib
+import logging
 from email.mime.text import MIMEText
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from .celery import celery
 from .redis_client import RedisClient
 from .db import SessionLocal
@@ -12,6 +14,7 @@ class Task:
     def __init__(self, redis_client: RedisClient, session_factory: Session):
         self.redis_client = redis_client
         self.session_factory = session_factory
+        self.logger = logging.getLogger(__name__)
 
     def process_csv_task(self, file_path: str, email: str) -> dict:
         session = self.session_factory()
@@ -39,8 +42,13 @@ class Task:
             self.complete_task(email)
             self.send_email(email)
             return {"status": "success", "message": "File processed successfully"}
-        except Exception as e:
+        except SQLAlchemyError as e:
+            self.logger.error(f"Database error: {e}")
             session.rollback()
+            self.fail_task(email)
+            raise Exception(f"Failed to process CSV: {e}")
+        except Exception as e:
+            self.logger.error(f"Error processing CSV: {e}")
             self.fail_task(email)
             raise Exception(f"Failed to process CSV: {e}")
         finally:
@@ -63,6 +71,7 @@ class Task:
                 server.login(smtp_user, smtp_password)
                 server.send_message(msg)
         except Exception as e:
+            self.logger.error(f"Failed to send email: {e}")
             raise Exception(f"Failed to send email: {e}")
 
     def complete_task(self, email: str) -> None:
@@ -70,6 +79,7 @@ class Task:
             task_id = f"task:{email}"
             self.redis_client.set(task_id, 'completed')
         except Exception as e:
+            self.logger.error(f"Failed to complete task: {e}")
             raise Exception(f"Failed to complete task: {e}")
 
     def fail_task(self, email: str) -> None:
@@ -77,6 +87,7 @@ class Task:
             task_id = f"task:{email}"
             self.redis_client.set(task_id, 'failed')
         except Exception as e:
+            self.logger.error(f"Failed to fail task: {e}")
             raise Exception(f"Failed to fail task: {e}")
 
 def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
@@ -87,6 +98,7 @@ def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -
             f.write(file_content)
         return file_path
     except Exception as e:
+        logging.error(f"Failed to save file: {e}")
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
 redis_client = RedisClient()
