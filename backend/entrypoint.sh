@@ -28,7 +28,7 @@ until mysql_ready; do
 done
 
 # Aplicar migrações do Alembic
-alembic upgrade head || true
+alembic upgrade head
 
 # Iniciar o servidor FastAPI
 uvicorn app.main:app --host 0.0.0.0 --port 8080
