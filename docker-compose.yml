@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  frontend:
+  front:
     build:
-      context: ./frontend
+      context: frontend
       dockerfile: Dockerfile
     container_name: frontend
     working_dir: /app
@@ -11,7 +11,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "8888:8888"
     depends_on:
       - api
     environment:
