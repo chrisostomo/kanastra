@@ -2,7 +2,7 @@ import os
 import csv
 import smtplib
 from email.mime.text import MIMEText
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException, Form
+from fastapi import BackgroundTasks, UploadFile, HTTPException, Form
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .celery import celery
@@ -10,21 +10,19 @@ from .redis_client import RedisClient
 from .db import SessionLocal
 from .models import Debt
 
-app = FastAPI()
-
-class Task:
+class AppService:
     def __init__(self, redis_client: RedisClient, session_factory: Session):
         self.redis_client = redis_client
         self.session_factory = session_factory
 
     def process_csv_task(self, file_path: str, email: str) -> dict:
         session = self.session_factory()
+        task_id = self.redis_client.create_task(email)
         try:
             with open(file_path, 'r') as file:
                 reader = csv.DictReader(file)
                 rows = list(reader)
 
-            # Extrair IDs governamentais para verificar duplicatas em lote
             government_ids = [row['governmentId'] for row in rows]
             existing_ids = session.query(Debt.government_id).filter(Debt.government_id.in_(government_ids)).all()
             existing_ids = set([eid[0] for eid in existing_ids])
@@ -50,16 +48,19 @@ class Task:
                 session.bulk_insert_mappings(Debt, batch)
                 session.commit()
 
-            self.complete_task(email)
-            self.send_email(email)
+            self.redis_client.complete_task(task_id)
+            try:
+                self.send_email(email)
+            except Exception as e:
+                self.redis_client.set(f'{task_id}_message', f'Processed but failed to send email: {e}')
             return {"status": "success", "message": "File processed successfully"}
         except IntegrityError as e:
             session.rollback()
-            self.fail_task(email)
+            self.redis_client.fail_task(task_id)
             raise Exception(f"Failed to process CSV due to IntegrityError: {e}")
         except Exception as e:
             session.rollback()
-            self.fail_task(email)
+            self.redis_client.fail_task(task_id)
             raise Exception(f"Failed to process CSV: {e}")
         finally:
             session.close()
@@ -83,19 +84,18 @@ class Task:
         except Exception as e:
             raise Exception(f"Failed to send email: {e}")
 
-    def complete_task(self, email: str) -> None:
+    async def upload_csv(self, background_tasks: BackgroundTasks, email: str, file: UploadFile):
         try:
-            task_id = f"task:{email}"
-            self.redis_client.set(task_id, 'completed')
+            contents = await file.read()
+            file_path = save_file(contents, file.filename)
+            background_tasks.add_task(process_csv_task, file_path=file_path, email=email)
+            return {"filename": file.filename}, 202
         except Exception as e:
-            raise Exception(f"Failed to complete task: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
-    def fail_task(self, email: str) -> None:
-        try:
-            task_id = f"task:{email}"
-            self.redis_client.set(task_id, 'failed')
-        except Exception as e:
-            raise Exception(f"Failed to fail task: {e}")
+    async def get_tasks(self):
+        tasks = self.redis_client.get_all_tasks()
+        return TasksResponse(tasks=tasks), 200
 
 def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -> str:
     try:
@@ -107,19 +107,7 @@ def save_file(file_content: bytes, file_name: str, directory: str = 'uploads') -
     except Exception as e:
         raise RuntimeError(f"Failed to save file: {str(e)}")
 
-redis_client = RedisClient()
-task = Task(redis_client=redis_client, session_factory=SessionLocal)
-
 @celery.task
 def process_csv_task(file_path: str, email: str) -> dict:
-    return task.process_csv_task(file_path, email)
-
-@app.post("/uploadfile/")
-async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...), email: str = Form(...)):
-    try:
-        contents = await file.read()
-        file_path = save_file(contents, file.filename)
-        background_tasks.add_task(process_csv_task, file_path=file_path, email=email)
-        return {"filename": file.filename}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    service = AppService(redis_client=RedisClient(), session_factory=SessionLocal)
+    return service.process_csv_task(file_path, email)
