@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useFileContext } from './file-provider';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 export const FileUploader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
