@@ -1,6 +1,6 @@
 import React from 'react';
-import { useFileContext } from '../components/ui/file-provider';
-import { FileUploader } from '../components/ui/file-uploader';
+import { useFileContext } from '@/components/ui/file-provider';
+import { FileUploader } from '@/components/ui/file-uploader';
 import { cn } from '../lib/utils';
 import {MESSAGES} from "@/constants/messages.ts";
 
