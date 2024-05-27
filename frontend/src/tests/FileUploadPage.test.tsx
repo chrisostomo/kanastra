@@ -1,14 +1,59 @@
-//import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
-import { render, fireEvent } from '@testing-library/react';
-import FileUploadPage from '../pages/FileUploadPage';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { FileProvider } from '@/components/ui/file-provider';
+import FileUploadPage from '@/pages/FileUploadPage';
+import { MESSAGES } from '@/constants/messages';
 
-test('should upload a file', () => {
-  const { getByText, getByLabelText } = render(<FileUploadPage />);
+describe('FileUploadPage', () => {
+  it('should render correctly', () => {
+    render(
+      <FileProvider>
+        <FileUploadPage />
+      </FileProvider>
+    );
+    expect(screen.getByText('Upload a File')).toBeInTheDocument();
+    expect(screen.getByLabelText('fileInput')).toBeInTheDocument();
+  });
 
-  const file = new File(['dummy content'], 'example.csv', { type: 'text/csv' });
-  const input = getByLabelText('Upload');
-  fireEvent.change(input, { target: { files: [file] } });
-  fireEvent.click(getByText('Upload'));
+  it('should handle file upload correctly', async () => {
+    render(
+      <FileProvider>
+        <FileUploadPage />
+      </FileProvider>
+    );
 
+    const file = new File(['content'], 'test-file.csv', { type: 'text/csv' });
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, name: 'test-file.csv' })
+      })
+    ) as jest.Mock;
+
+    const input = screen.getByLabelText('fileInput');
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
+  });
+
+  it('should handle errors correctly', async () => {
+    render(
+      <FileProvider>
+        <FileUploadPage />
+      </FileProvider>
+    );
+
+    const file = new File(['content'], 'test-file.csv', { type: 'text/csv' });
+
+    global.fetch = jest.fn(() =>
+      Promise.reject(new Error(MESSAGES.ERROR.UPLOAD_FILE))
+    ) as jest.Mock;
+
+    const input = screen.getByLabelText('fileInput');
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(`Error: ${MESSAGES.ERROR.UPLOAD_FILE}`)).toBeInTheDocument());
+  });
 });
