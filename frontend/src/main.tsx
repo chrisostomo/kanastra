@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import * as Components from './components';
 import FileUploadPage from './pages/FileUploadPage';
 import FileListPage from './pages/FileListPage';
-import { FileProvider } from './components/ui/file-provider'; // Certifique-se do caminho correto
+import { FileProvider } from './components/ui/file-provider'; 
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
