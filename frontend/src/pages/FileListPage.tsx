@@ -1,5 +1,16 @@
 import React, { useEffect } from 'react';
-import { useFileContext } from '../components/index';
+import { useFileContext } from '../components/ui/file-provider';
+import { cn } from '../lib/utils';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption
+} from '../components/ui/table';
 
 const FileListPage: React.FC = () => {
   const { state, fetchFiles } = useFileContext();
@@ -9,20 +20,39 @@ const FileListPage: React.FC = () => {
   }, [fetchFiles]);
 
   return (
-    <div className="container mx-auto p-4 text-center">
-      <h1 className="text-2xl mb-4">Lista de Arquivos</h1>
+    <div className={cn("container mx-auto p-4 text-center")}>
+      <h1 className={cn("text-2xl mb-4")}>Lista de Arquivos</h1>
       {state.isLoading ? (
-        <p className="text-gray-600">Carregando...</p>
+        <p className={cn("text-gray-600")}>Carregando...</p>
       ) : (
-        <ul className="list-disc list-inside">
-          {state.fileList.map((file) => (
-            <li key={file.filename} className="text-left text-gray-800">{file.filename}</li>
-          ))}
-        </ul>
+        <Table className="table-auto">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome do Arquivo</TableHead>
+              <TableHead>Data de Upload</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {state.fileList.map((file) => (
+              <TableRow key={file.name}>
+                <TableCell>{file.name}</TableCell>
+                <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          {state.fileList.length === 0 && (
+            <TableCaption>Não há arquivos enviados</TableCaption>
+          )}
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={2}>Total de arquivos: {state.fileList.length}</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
       )}
-      {state.error && <p className="text-red-600">Erro: {state.error}</p>}
+      {state.error && <p className={cn("text-red-600")}>Erro: {state.error}</p>}
     </div>
   );
 };
 
-export default FileListPage;
+export default React.memo(FileListPage);

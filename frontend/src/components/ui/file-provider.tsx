@@ -1,114 +1,71 @@
-import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import React, { createContext, useReducer, useContext, useEffect, ReactNode } from 'react';
+import { FileActionType, FileContextState, FileAction, FileProviderProps, FileContextType } from '@/types/file';
+import { initialState, fileReducer } from '@/reducers/fileReducer';
 
-// Tipos
-type FileContextState = {
-  isLoading: boolean;
-  file: File | null;
-  fileList: File[];
-  error: string | null;
-};
+const FileContext = createContext<FileContextType | undefined>(undefined);
 
-type FileAction =
-  | { type: 'SET_LOADING'; payload: { isLoading: boolean } }
-  | { type: 'SET_FILE'; payload: { file: File | null } }
-  | { type: 'SET_FILE_LIST'; payload: { fileList: File[] } }
-  | { type: 'SET_ERROR'; payload: { error: string | null } };
-
-type FileProviderProps = { children: React.ReactNode };
-
-// Estado Inicial
-const initialState: FileContextState = {
-  isLoading: false,
-  file: null,
-  fileList: [],
-  error: null,
-};
-
-// Reducer
-const fileReducer = (state: FileContextState, action: FileAction): FileContextState => {
-  switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload.isLoading };
-    case 'SET_FILE':
-      return { ...state, file: action.payload.file, isLoading: false };
-    case 'SET_FILE_LIST':
-      return { ...state, fileList: action.payload.fileList, isLoading: false };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload.error, isLoading: false };
-    default:
-      return state;
-  }
-};
-
-// Contexto
-const FileContext = createContext<FileContextState | undefined>(undefined);
-const FileDispatchContext = createContext<React.Dispatch<FileAction> | undefined>(undefined);
-
-const useFileContext = (): { state: FileContextState, uploadFile: (formData: FormData) => Promise<void> } => {
-  const state = useContext(FileContext);
-  const dispatch = useContext(FileDispatchContext);
-
-  if (!state || !dispatch) {
-    throw new Error('useFileContext must be used within a FileProvider');
-  }
+const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(fileReducer, initialState);
 
   const fetchFiles = async () => {
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
+    dispatch({ type: FileActionType.SET_LOADING, payload: { isLoading: true } });
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/files`);
       const data = await response.json();
-      dispatch({ type: 'SET_FILE_LIST', payload: { fileList: data } });
+      dispatch({ type: FileActionType.SET_FILE_LIST, payload: { fileList: data } });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: (error as Error).message } });
+      dispatch({ type: FileActionType.SET_ERROR, payload: { error: (error as Error).message } });
     }
   };
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8080/ws');
+    const connectWebSocket = () => {
+      const socket = new WebSocket('ws://localhost:8000/ws');
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'FILE_LIST_UPDATED') {
-        fetchFiles().catch(console.error);
-      }
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.event === 'file_uploaded') {
+          fetchFiles();
+        }
+      };
+
+      socket.onclose = () => {
+        console.log('WebSocket closed. Reconnecting...');
+        setTimeout(connectWebSocket, 1000);
+      };
     };
 
-    return () => {
-      socket.close();
-    };
+    connectWebSocket();
   }, []);
 
   const uploadFile = async (formData: FormData) => {
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
+    dispatch({ type: FileActionType.SET_LOADING, payload: { isLoading: true } });
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
       const data = await response.json();
-      dispatch({ type: 'SET_FILE', payload: { file: data } });
+      dispatch({ type: FileActionType.SET_FILE, payload: { file: data } });
       await fetchFiles();
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: (error as Error).message } });
+      dispatch({ type: FileActionType.SET_ERROR, payload: { error: (error as Error).message } });
     }
   };
 
-  return {
-    state,
-    uploadFile
-  };
-};
-
-const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(fileReducer, initialState);
-
   return (
-    <FileContext.Provider value={state}>
-      <FileDispatchContext.Provider value={dispatch}>
-        {children}
-      </FileDispatchContext.Provider>
+    <FileContext.Provider value={{ state, dispatch, fetchFiles, uploadFile }}>
+      {children}
     </FileContext.Provider>
   );
+};
+
+const useFileContext = (): FileContextType => {
+  const context = useContext(FileContext);
+  if (!context) {
+    throw new Error('useFileContext must be used within a FileProvider');
+  }
+  return context;
 };
 
 export { FileProvider, useFileContext };

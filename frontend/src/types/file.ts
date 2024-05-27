@@ -19,7 +19,7 @@ export type FileContextState = {
   error: string | null;
 };
 
-export type FileAction = ReducerAction<FileActionType, Partial<FileContextState>>;
+export type FileAction = ReducerAction<FileActionType, FileContextState>;
 
 export type FileDispatch = ({ type, payload }: FileAction) => void;
 

@@ -1,29 +1,32 @@
-import React, { useState } from 'react';
-import { FileProvider } from '../components/ui/file-provider';
+import React from 'react';
+import { useFileContext } from '../components/ui/file-provider';
 import { FileUploader } from '../components/ui/file-uploader';
+import { cn } from '../lib/utils';
 
 const FileUploadPage: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
+  const { uploadFile } = useFileContext();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0] || null;
-    setFile(selectedFile);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      await uploadFile(formData);
+    }
   };
 
   return (
-    <FileProvider>
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-2xl mb-4">Upload a File</h1>
-        <input
-          id="fileInput"
-          type="file"
-          accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-          onChange={handleFileChange}
-          className="mb-4"
-        />
-        <FileUploader file={file} />
-      </div>
-    </FileProvider>
+    <div className={cn("container mx-auto p-4 text-center")}>
+      <h1 className={cn("text-2xl mb-4")}>Upload a File</h1>
+      <input
+        id="fileInput"
+        type="file"
+        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+        onChange={handleFileChange}
+        className={cn("mb-4")}
+      />
+      <FileUploader />
+    </div>
   );
 };
 

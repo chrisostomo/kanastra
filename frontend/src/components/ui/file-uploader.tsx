@@ -1,40 +1,40 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useFileContext } from './file-provider';
+import { cn } from '../lib/utils';
 
-type FileUploaderProps = {
-  file: File | null;
-};
+export const FileUploader: React.FC = () => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { uploadFile } = useFileContext();
 
-const FileUploader: React.FC<FileUploaderProps> = ({ file }) => {
   const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      // Lógica de upload de arquivo aqui
-      console.log('Uploading file:', file);
+      const formData = new FormData();
+      formData.append('file', file);
+      uploadFile(formData);
     }
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {file && (
-        <section>
-          <p className="pb-6">File details:</p>
-          <ul>
-            <li>Name: {file.name}</li>
-            <li>Type: {file.type}</li>
-            <li>Size: {file.size} bytes</li>
-          </ul>
-        </section>
-      )}
-
-      {file && (
-        <button
-          className="rounded-lg bg-green-800 text-white px-4 py-2 border-none font-semibold"
-          onClick={handleUploadClick}
-        >
-          Upload the file
-        </button>
-      )}
+    <div className="flex flex-col items-center gap-6">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      <button
+        className={cn("px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600")}
+        onClick={handleUploadClick}
+      >
+        Upload File
+      </button>
     </div>
   );
 };
-
-export { FileUploader };
