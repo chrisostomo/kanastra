@@ -1,5 +1,10 @@
 import { ReactNode } from "react";
 
+export interface File {
+  name: string;
+  uploadedAt: string; // assuming this is the format of the uploaded date
+}
+
 export enum FileActionType {
   SET_LOADING = 'SET_LOADING',
   SET_FILE = 'SET_FILE',

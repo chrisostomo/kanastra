@@ -1,5 +1,5 @@
-import React, { createContext, useReducer, useContext, useEffect, ReactNode, useCallback } from 'react';
-import { FileActionType, FileContextState, FileAction, FileProviderProps, FileContextType } from '@/types/file';
+import React, { createContext, useReducer, useContext, useEffect, useCallback } from 'react';
+import { FileActionType, FileProviderProps, FileContextType } from '@/types/file';
 import { initialState, fileReducer } from '@/reducers/fileReducer';
 import { MESSAGES } from '@/constants/messages';
 
@@ -18,7 +18,7 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
       const data = await response.json();
       dispatch({ type: FileActionType.SET_FILE_LIST, payload: { fileList: data } });
     } catch (error) {
-      dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
+      //dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
   }, []);
 
@@ -61,7 +61,7 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
       dispatch({ type: FileActionType.SET_FILE, payload: { file: data } });
       await fetchFiles();
     } catch (error) {
-      dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
+      //dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
   }, [fetchFiles]);
 
