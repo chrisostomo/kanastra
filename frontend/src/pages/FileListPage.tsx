@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useFileContext } from '../components/ui/file-provider';
+import { useFileContext } from '@/components';
 import { cn } from '../lib/utils';
 import {
   Table,
@@ -10,7 +10,8 @@ import {
   TableHead,
   TableCell,
   TableCaption
-} from '../components/ui/table';
+} from '@/components';
+import {MESSAGES} from "@/constants/messages.ts";
 
 const FileListPage: React.FC = () => {
   const { state, fetchFiles } = useFileContext();

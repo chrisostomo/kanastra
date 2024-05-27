@@ -2,6 +2,7 @@ import React from 'react';
 import { useFileContext } from '../components/ui/file-provider';
 import { FileUploader } from '../components/ui/file-uploader';
 import { cn } from '../lib/utils';
+import {MESSAGES} from "@/constants/messages.ts";
 
 const FileUploadPage: React.FC = () => {
   const { uploadFile, state } = useFileContext();
@@ -26,6 +27,7 @@ const FileUploadPage: React.FC = () => {
         className={cn("mb-4")}
       />
       <FileUploader />
+      {state.isLoading && <p>{MESSAGES.INFO.LOADING}</p>}
       {state.error && <p className={cn("text-red-600")}>{state.error}</p>}
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useReducer, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { FileActionType, FileContextState, FileAction, FileProviderProps, FileContextType } from '@/types/file';
 import { initialState, fileReducer } from '@/reducers/fileReducer';
 import { MESSAGES } from '@/constants/messages';
@@ -8,7 +8,7 @@ const FileContext = createContext<FileContextType | undefined>(undefined);
 const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(fileReducer, initialState);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     dispatch({ type: FileActionType.SET_LOADING, payload: { isLoading: true } });
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/files`);
@@ -20,7 +20,7 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } catch (error) {
       dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
-  };
+  }, []);
 
   useEffect(() => {
     const connectWebSocket = () => {
@@ -45,9 +45,9 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     };
 
     connectWebSocket();
-  }, []);
+  }, [fetchFiles]);
 
-  const uploadFile = async (formData: FormData) => {
+  const uploadFile = useCallback(async (formData: FormData) => {
     dispatch({ type: FileActionType.SET_LOADING, payload: { isLoading: true } });
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/upload`, {
@@ -63,7 +63,7 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     } catch (error) {
       dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
-  };
+  }, [fetchFiles]);
 
   return (
     <FileContext.Provider value={{ state, dispatch, fetchFiles, uploadFile }}>
