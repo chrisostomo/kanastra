@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from typing import List
 from app.models.debt import Debt
 from app.schemas import DebtCreate, Debt
 from app.repositories.interfaces.debt_repository_interface import IDebtRepository
