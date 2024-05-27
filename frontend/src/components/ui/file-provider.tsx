@@ -24,7 +24,7 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const connectWebSocket = () => {
-      const socket = new WebSocket('ws://localhost:8000/ws');
+      const socket = new WebSocket('ws://localhost:8080/ws');
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
