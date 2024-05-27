@@ -19,7 +19,7 @@ class CsvFile(CsvFileBase):
     error_message: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class DebtBase(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
@@ -41,4 +41,4 @@ class Debt(DebtBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

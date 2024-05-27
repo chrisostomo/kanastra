@@ -13,7 +13,7 @@ services:
     ports:
       - "8888:8888"
     depends_on:
-      - worker
+      - api
     environment:
       - REACT_APP_API_URL=http://api:8080
 
@@ -28,16 +28,19 @@ services:
       - rabbitmq
     env_file:
       - ./.env
+    volumes:
+      - ./backend:/app
+      - /app/logs
 
   worker:
     build:
       context: ./backend
     container_name: celery_worker
-    command: celery -A app.tasks.celery_app worker --loglevel=info
+    command: ["celery", "-A", "app.tasks", "worker", "--loglevel=info"]
+    user: celeryuser
     depends_on:
       - db
       - rabbitmq
-      - api
     env_file:
       - ./.env
 
@@ -61,6 +64,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    env_file:
+      - ./.env
 
 volumes:
   db_data:

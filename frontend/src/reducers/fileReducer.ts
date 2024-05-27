@@ -1,15 +1,13 @@
-import { FileActionType, FileContextState, FileAction } from '@/types';
+import { FileContextState, FileAction, FileActionType } from '@/types';
 
-// Estado inicial do contexto de arquivos
-const initialState: FileContextState = {
+export const initialState: FileContextState = {
   isLoading: false,
   file: null,
   fileList: [],
   error: null,
 };
 
-// Implementação do reducer
-const fileReducer = (state: FileContextState, action: FileAction): FileContextState => {
+export const fileReducer = (state: FileContextState, action: FileAction): FileContextState => {
   switch (action.type) {
     case FileActionType.SET_LOADING:
       return { ...state, isLoading: action.payload?.isLoading ?? false };
@@ -23,5 +21,3 @@ const fileReducer = (state: FileContextState, action: FileAction): FileContextSt
       return state;
   }
 };
-
-export { fileReducer, initialState };

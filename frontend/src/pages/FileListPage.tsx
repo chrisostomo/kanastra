@@ -1,46 +1,27 @@
 import React, { useEffect } from 'react';
-import { FileProvider, useFileContext } from '../components/ui/file';
-import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from '../components/ui';
+import { useFileContext } from '../components/index';
 
-const FileList = () => {
+const FileListPage: React.FC = () => {
   const { state, fetchFiles } = useFileContext();
 
   useEffect(() => {
-    fetchFiles();
+    fetchFiles().catch(console.error);
   }, [fetchFiles]);
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Filename</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {state.fileList.map((file, index) => (
-          <TableRow key={index}>
-            <TableCell>{file.filename}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell>Total: {state.fileList.length} files</TableCell>
-        </TableRow>
-      </TableFooter>
-      <TableCaption>Uploaded Files</TableCaption>
-    </Table>
-  );
-};
-
-const FileListPage = () => {
-  return (
-    <FileProvider>
-      <div>
-        <h1>Uploaded Files</h1>
-        <FileList />
-      </div>
-    </FileProvider>
+    <div className="container mx-auto p-4 text-center">
+      <h1 className="text-2xl mb-4">Lista de Arquivos</h1>
+      {state.isLoading ? (
+        <p className="text-gray-600">Carregando...</p>
+      ) : (
+        <ul className="list-disc list-inside">
+          {state.fileList.map((file) => (
+            <li key={file.filename} className="text-left text-gray-800">{file.filename}</li>
+          ))}
+        </ul>
+      )}
+      {state.error && <p className="text-red-600">Erro: {state.error}</p>}
+    </div>
   );
 };
 
