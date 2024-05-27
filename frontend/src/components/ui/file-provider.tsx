@@ -1,6 +1,7 @@
 import React, { createContext, useReducer, useContext, useEffect, ReactNode } from 'react';
 import { FileActionType, FileContextState, FileAction, FileProviderProps, FileContextType } from '@/types/file';
 import { initialState, fileReducer } from '@/reducers/fileReducer';
+import { MESSAGES } from '@/constants/messages';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -11,10 +12,13 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
     dispatch({ type: FileActionType.SET_LOADING, payload: { isLoading: true } });
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/files`);
+      if (!response.ok) {
+        throw new Error(MESSAGES.ERROR.FETCH_FILES + response.statusText);
+      }
       const data = await response.json();
       dispatch({ type: FileActionType.SET_FILE_LIST, payload: { fileList: data } });
     } catch (error) {
-      dispatch({ type: FileActionType.SET_ERROR, payload: { error: (error as Error).message } });
+      dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
   };
 
@@ -30,8 +34,13 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
       };
 
       socket.onclose = () => {
-        console.log('WebSocket closed. Reconnecting...');
+        console.log(MESSAGES.ERROR.WEBSOCKET);
         setTimeout(connectWebSocket, 1000);
+      };
+
+      socket.onerror = (error) => {
+        console.error(MESSAGES.ERROR.WEBSOCKET, error);
+        dispatch({ type: FileActionType.SET_ERROR, payload: { error: MESSAGES.ERROR.WEBSOCKET } });
       };
     };
 
@@ -45,11 +54,14 @@ const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
         method: 'POST',
         body: formData,
       });
+      if (!response.ok) {
+        throw new Error(MESSAGES.ERROR.UPLOAD_FILE + response.statusText);
+      }
       const data = await response.json();
       dispatch({ type: FileActionType.SET_FILE, payload: { file: data } });
       await fetchFiles();
     } catch (error) {
-      dispatch({ type: FileActionType.SET_ERROR, payload: { error: (error as Error).message } });
+      dispatch({ type: FileActionType.SET_ERROR, payload: { error: error.message } });
     }
   };
 

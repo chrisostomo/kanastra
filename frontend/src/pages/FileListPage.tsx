@@ -23,7 +23,7 @@ const FileListPage: React.FC = () => {
     <div className={cn("container mx-auto p-4 text-center")}>
       <h1 className={cn("text-2xl mb-4")}>Lista de Arquivos</h1>
       {state.isLoading ? (
-        <p className={cn("text-gray-600")}>Carregando...</p>
+        <p className={cn("text-gray-600")}>{MESSAGES.INFO.LOADING}</p>
       ) : (
         <Table className="table-auto">
           <TableHeader>
@@ -41,7 +41,7 @@ const FileListPage: React.FC = () => {
             ))}
           </TableBody>
           {state.fileList.length === 0 && (
-            <TableCaption>Não há arquivos enviados</TableCaption>
+            <TableCaption>{MESSAGES.INFO.NO_FILES}</TableCaption>
           )}
           <TableFooter>
             <TableRow>
@@ -50,7 +50,7 @@ const FileListPage: React.FC = () => {
           </TableFooter>
         </Table>
       )}
-      {state.error && <p className={cn("text-red-600")}>Erro: {state.error}</p>}
+      {state.error && <p className={cn("text-red-600")}>{state.error}</p>}
     </div>
   );
 };

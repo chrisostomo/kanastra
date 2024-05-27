@@ -4,7 +4,7 @@ import { FileUploader } from '../components/ui/file-uploader';
 import { cn } from '../lib/utils';
 
 const FileUploadPage: React.FC = () => {
-  const { uploadFile } = useFileContext();
+  const { uploadFile, state } = useFileContext();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -26,6 +26,7 @@ const FileUploadPage: React.FC = () => {
         className={cn("mb-4")}
       />
       <FileUploader />
+      {state.error && <p className={cn("text-red-600")}>{state.error}</p>}
     </div>
   );
 };
