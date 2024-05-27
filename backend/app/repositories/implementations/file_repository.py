@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
-from app.models.file import CsvFile
+from app.models.csv_file import CsvFile  # Corrigida a importação
 from app.schemas import CsvFileCreate
 from app.repositories.interfaces.file_repository_interface import IFileRepository
 
